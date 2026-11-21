@@ -174,6 +174,64 @@ export default function Home() {
         </div>
       )}
 
+      {/* Floating Bottom-Left HAN STUDIO Circular Emblem Badge (Menggantikan Logo Next.js) */}
+      <button
+        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        aria-label="Kembali ke Atas — HAN STUDIO"
+        title="HAN STUDIO — PORTO FOLIO 2026 (Klik untuk kembali ke atas)"
+        className="fixed bottom-4 left-4 z-40 group flex items-center gap-2 p-1 rounded-full bg-[#021238]/90 backdrop-blur-md border border-[#E2C275]/60 hover:border-[#E2C275] shadow-[0_8px_24px_rgba(0,0,0,0.65)] hover:shadow-[0_0_24px_rgba(226,194,117,0.45)] transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer"
+      >
+        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden shadow shrink-0">
+          <svg viewBox="0 0 220 220" className="w-full h-full">
+            <defs>
+              <radialGradient id="floatBadgeBlue" cx="50%" cy="40%" r="65%">
+                <stop offset="0%" stopColor="#0058FF" />
+                <stop offset="55%" stopColor="#0035B8" />
+                <stop offset="100%" stopColor="#001760" />
+              </radialGradient>
+            </defs>
+            <circle cx="110" cy="110" r="106" fill="#FFFFFF" />
+            <circle cx="110" cy="110" r="99" fill="url(#floatBadgeBlue)" stroke="#001F6E" strokeWidth="3.5" />
+            <circle cx="110" cy="110" r="93" fill="none" stroke="#E2C275" strokeWidth="2" strokeDasharray="5 5" opacity="0.85" />
+            <g
+              textAnchor="middle"
+              fontFamily="'Fredoka', 'Plus Jakarta Sans', system-ui, sans-serif"
+              fontWeight="900"
+            >
+              <text
+                x="110"
+                y="98"
+                fontSize="64"
+                letterSpacing="2"
+                fill="#FFFFFF"
+                stroke="#00207A"
+                strokeWidth="7"
+                strokeLinejoin="round"
+                paintOrder="stroke fill"
+              >
+                HAN
+              </text>
+              <text
+                x="110"
+                y="146"
+                fontSize="36"
+                letterSpacing="2.5"
+                fill="#FFFFFF"
+                stroke="#00207A"
+                strokeWidth="5"
+                strokeLinejoin="round"
+                paintOrder="stroke fill"
+              >
+                STUDIO
+              </text>
+            </g>
+          </svg>
+        </div>
+        <span className="hidden sm:inline-block max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-300 ease-out whitespace-nowrap text-[10px] font-mono-code text-[#E2C275] font-bold pr-2.5">
+          HAN STUDIO
+        </span>
+      </button>
+
       {/* Full-Screen Lightbox Modal */}
       <LightboxModal
         item={lightboxItem}

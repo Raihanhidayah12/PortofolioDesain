@@ -4,6 +4,7 @@ const nextConfig: NextConfig = {
   /* config options here */
   cacheComponents: true,
   partialPrefetching: true,
+  devIndicators: false,
   serverExternalPackages: ['@napi-rs/canvas', 'pdfjs-dist'],
 };
 

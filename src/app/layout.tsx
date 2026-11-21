@@ -27,6 +27,13 @@ export const metadata: Metadata = {
     'PORTO FOLIO',
   ],
   authors: [{ name: 'Han' }],
+  icons: {
+    icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: 'any' },
+    ],
+    apple: '/icon.svg',
+  },
 };
 
 export default function RootLayout({
@@ -37,7 +44,9 @@ export default function RootLayout({
   return (
     <html lang="id" className="dark bg-[#010B24]" style={{ backgroundColor: '#010B24', colorScheme: 'dark' }}>
       <head>
-        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+        <link rel="alternate icon" href="/favicon.ico" sizes="any" />
+        <link rel="apple-touch-icon" href="/icon.svg" />
         <meta name="color-scheme" content="dark" />
         <meta name="theme-color" content="#010B24" />
       </head>
