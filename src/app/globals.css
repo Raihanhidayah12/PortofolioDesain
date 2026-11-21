@@ -1,0 +1,163 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --scrollbar-thumb: #C6A355;
+  --scrollbar-thumb-hover: #F6DFB0;
+  --scrollbar-track: #010B24;
+}
+
+html {
+  background-color: #010B24;
+  color-scheme: dark;
+  scroll-behavior: smooth;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  -webkit-text-size-adjust: 100%;
+  width: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: none; /* Standard: Firefox & modern Chromium */
+  -ms-overflow-style: none; /* IE/Legacy Edge */
+}
+
+/* Sembunyikan scrollbar secara menyeluruh di semua browser WebKit (Chrome, Edge, Safari, Opera) */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-width: 320px;
+  background-color: #010B24;
+  color-scheme: dark;
+  color: #ffffff;
+  overflow: visible;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Touch & Mobile UX Enhancements */
+* {
+  -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
+}
+
+.font-display {
+  font-family: 'Fredoka', 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
+.font-mono-code {
+  font-family: 'Space Mono', monospace;
+}
+
+@keyframes slowSunburst {
+  from { transform: translate(500px, 500px) rotate(0deg); }
+  to { transform: translate(500px, 500px) rotate(360deg); }
+}
+
+.sunburst-spin {
+  animation: slowSunburst 130s linear infinite;
+}
+
+@keyframes marqueeLeft {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marqueeLeft 26s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-7px); }
+}
+
+@keyframes letterFloat {
+  0%, 100% { transform: translateY(0px); }
+  45%       { transform: translateY(-11px); }
+  55%       { transform: translateY(-11px); }
+}
+
+@keyframes letterBounce {
+  0%   { transform: translateY(0px) scale(1); }
+  20%  { transform: translateY(-18px) scale(1.08); }
+  40%  { transform: translateY(-6px) scale(0.97); }
+  60%  { transform: translateY(-14px) scale(1.04); }
+  80%  { transform: translateY(-2px) scale(0.99); }
+  100% { transform: translateY(0px) scale(1); }
+}
+
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDownFade {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+}
+
+.animate-slide-up {
+  animation: slideUpFade 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-slide-down {
+  animation: slideDownFade 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.float-slow {
+  animation: floatSlow 4.5s ease-in-out infinite;
+}
+
+@keyframes trailFlow {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: -132;
+  }
+}
+
+.animate-trail-flow {
+  animation: trailFlow 4s linear infinite;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
