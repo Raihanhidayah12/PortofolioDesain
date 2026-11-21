@@ -429,7 +429,7 @@ export const JourneySection: React.FC<JourneySectionProps> = ({
                     {/* Scattered Mini Polaroid Peek + Open Log Indicator */}
                     <div className="mt-3.5 pt-2.5 border-t border-white/15 flex flex-wrap items-center justify-between gap-2 relative z-10">
                       <div className="flex items-center -space-x-2">
-                        {stop.photos.map((ph, pIdx) => (
+                        {stop.photos.slice(0, 3).map((ph, pIdx) => (
                           <div
                             key={ph.id}
                             style={{

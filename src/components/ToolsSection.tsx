@@ -269,6 +269,8 @@ export const ToolsSection: React.FC = () => {
                             <img
                               src={tool.icon_url}
                               alt={tool.name}
+                              loading="lazy"
+                              decoding="async"
                               className="w-full h-full object-contain"
                               onError={() => {
                                 setIconErrors((prev) => ({ ...prev, [tool.id]: true }));
@@ -315,6 +317,8 @@ export const ToolsSection: React.FC = () => {
                           <img
                             src={activeTool.icon_url}
                             alt={activeTool.name}
+                            loading="lazy"
+                            decoding="async"
                             className="w-full h-full object-contain"
                           />
                         </div>

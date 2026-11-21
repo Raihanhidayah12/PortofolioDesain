@@ -44,13 +44,54 @@ export async function POST(request: Request) {
       .toLowerCase()
       .replace(/[^a-z0-9_-]/g, '-');
     
+    let finalBuffer: Uint8Array = buffer;
     const uniqueFileName = `${Date.now()}-${baseName}${ext}`;
+
+    // Auto-compress and proportionally downscale raster images (> 1600px or > 300KB)
+    if (['.png', '.jpg', '.jpeg', '.webp'].includes(ext)) {
+      try {
+        const { createCanvas, loadImage } = await import('@napi-rs/canvas');
+        const img = await loadImage(buffer);
+        const maxDim = 1600;
+        let w = img.width;
+        let h = img.height;
+
+        const needsResize = w > maxDim || h > maxDim;
+        const needsCompression = buffer.length > 300 * 1024;
+
+        if (needsResize || needsCompression) {
+          if (needsResize) {
+            if (w > h) {
+              h = Math.round((h * maxDim) / w);
+              w = maxDim;
+            } else {
+              w = Math.round((w * maxDim) / h);
+              h = maxDim;
+            }
+          }
+
+          const canvas = createCanvas(w, h);
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+
+          if (ext === '.jpg' || ext === '.jpeg') {
+            finalBuffer = new Uint8Array(canvas.toBuffer('image/jpeg', 85));
+          } else if (ext === '.webp') {
+            finalBuffer = new Uint8Array(canvas.toBuffer('image/webp', 85));
+          } else {
+            finalBuffer = new Uint8Array(canvas.toBuffer('image/png'));
+          }
+        }
+      } catch (imgOptErr) {
+        console.warn('Image auto-optimization skipped, saving original buffer:', imgOptErr);
+      }
+    }
 
     const targetDir = path.join(process.cwd(), 'public', folder === 'icons' ? 'icons' : 'uploads');
     await mkdir(targetDir, { recursive: true });
 
     const filePath = path.join(targetDir, uniqueFileName);
-    await writeFile(filePath, buffer);
+    await writeFile(filePath, finalBuffer);
 
     const publicUrl = `/${folder === 'icons' ? 'icons' : 'uploads'}/${uniqueFileName}`;
 
@@ -96,7 +137,7 @@ export async function POST(request: Request) {
       url: publicUrl,
       thumbnailUrl,
       filename: uniqueFileName,
-      size: buffer.length,
+      size: finalBuffer.length,
     });
   } catch (error) {
     console.error('Upload API error:', error);

@@ -153,6 +153,8 @@ export const CertificatesSection: React.FC<CertificatesSectionProps> = ({
                         <img
                           src={cert.imageUrl}
                           alt={cert.title}
+                          loading="lazy"
+                          decoding="async"
                           className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-[#021238]/90 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />

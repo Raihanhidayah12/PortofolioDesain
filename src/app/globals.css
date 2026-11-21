@@ -161,3 +161,13 @@ body {
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
 }
+
+/* Modern Performance: Offload layout & paint calculation for offscreen heavy media sections */
+#journey,
+#certificates,
+#design-gallery,
+#photography-gallery,
+#tools {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 900px;
+}
