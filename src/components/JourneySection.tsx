@@ -347,9 +347,6 @@ export const JourneySection: React.FC<JourneySectionProps> = ({
             <IconCompass className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#E2C275] shrink-0" />
             <span>RUTE LAUT: {stops.length > 0 ? `${stops.length} TITIK KEPANITIAAN` : 'EKSPEDISI KEPANITIAAN'}</span>
           </span>
-          <span className="text-[#E2C275] flex items-center gap-1">
-            <span>SEKTOR DDM &bull; FOTOGRAFI &bull; OPERATOR</span>
-          </span>
         </div>
 
         {/* DYNAMIC CONTINUOUS WINDING S-CURVE TREASURE TRAIL SVG (MOBILE & DESKTOP) */}
