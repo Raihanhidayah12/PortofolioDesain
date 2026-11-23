@@ -220,7 +220,15 @@ export const JourneySection: React.FC<JourneySectionProps> = ({
 
   const openModal = (stop: TreasureStop) => {
     setActiveStopId(stop.id);
-    setActiveModalTab('photos');
+    const photosCount = (stop.photos || []).length;
+    const outputsCount = (stop.outputs || []).length;
+    if (photosCount > 0) {
+      setActiveModalTab('photos');
+    } else if (outputsCount > 0) {
+      setActiveModalTab('outputs');
+    } else {
+      setActiveModalTab('photos');
+    }
     requestAnimationFrame(() => requestAnimationFrame(() => setModalVisible(true)));
   };
 
@@ -638,37 +646,76 @@ export const JourneySection: React.FC<JourneySectionProps> = ({
                 </p>
               </div>
 
-              {/* Tab Selector Buttons */}
-              <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-[#010B22] border border-[#C6A355]/40 w-full sm:w-fit">
-                <button
-                  type="button"
-                  onClick={() => setActiveModalTab('photos')}
-                  className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-mono-code font-bold transition-all cursor-pointer ${
-                    activeModalTab === 'photos'
-                      ? 'bg-gradient-to-r from-[#6B0F1A] to-[#8A1422] text-[#F6DFB0] border border-[#E2C275] shadow-md'
-                      : 'text-blue-200/70 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  <IconCamera className="w-3.5 h-3.5 text-[#E2C275]" />
-                  <span>Dokumentasi Lapangan ({activeStop.photos.length})</span>
-                </button>
+              {/* Tab Selector Buttons & Dynamic Header */}
+              {(() => {
+                const photosList = activeStop.photos || [];
+                const outputsList = activeStop.outputs || [];
+                const hasPhotos = photosList.length > 0;
+                const hasOutputs = outputsList.length > 0;
 
-                <button
-                  type="button"
-                  onClick={() => setActiveModalTab('outputs')}
-                  className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-mono-code font-bold transition-all cursor-pointer ${
-                    activeModalTab === 'outputs'
-                      ? 'bg-gradient-to-r from-[#6B0F1A] to-[#8A1422] text-[#F6DFB0] border border-[#E2C275] shadow-md'
-                      : 'text-blue-200/70 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  <IconLayers className="w-3.5 h-3.5 text-[#E2C275]" />
-                  <span>Hasil Desain DDM ({activeStop.outputs.length})</span>
-                </button>
-              </div>
+                // Case 1: Both photos and designs exist -> show tab toggle buttons
+                if (hasPhotos && hasOutputs) {
+                  return (
+                    <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-[#010B22] border border-[#C6A355]/40 w-full sm:w-fit">
+                      <button
+                        type="button"
+                        onClick={() => setActiveModalTab('photos')}
+                        className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-mono-code font-bold transition-all cursor-pointer ${
+                          activeModalTab === 'photos'
+                            ? 'bg-gradient-to-r from-[#6B0F1A] to-[#8A1422] text-[#F6DFB0] border border-[#E2C275] shadow-md'
+                            : 'text-blue-200/70 hover:text-white hover:bg-white/5'
+                        }`}
+                      >
+                        <IconCamera className="w-3.5 h-3.5 text-[#E2C275]" />
+                        <span>Dokumentasi Lapangan ({photosList.length})</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setActiveModalTab('outputs')}
+                        className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-mono-code font-bold transition-all cursor-pointer ${
+                          activeModalTab === 'outputs'
+                            ? 'bg-gradient-to-r from-[#6B0F1A] to-[#8A1422] text-[#F6DFB0] border border-[#E2C275] shadow-md'
+                            : 'text-blue-200/70 hover:text-white hover:bg-white/5'
+                        }`}
+                      >
+                        <IconLayers className="w-3.5 h-3.5 text-[#E2C275]" />
+                        <span>Hasil Desain DDM ({outputsList.length})</span>
+                      </button>
+                    </div>
+                  );
+                }
+
+                // Case 2: Only photos exist -> show single header badge, completely hide Hasil Desain
+                if (hasPhotos && !hasOutputs) {
+                  return (
+                    <div className="flex items-center gap-2 p-1 rounded-2xl bg-[#010B22] border border-[#C6A355]/40 w-fit">
+                      <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-mono-code font-bold bg-gradient-to-r from-[#6B0F1A] to-[#8A1422] text-[#F6DFB0] border border-[#E2C275]/60 shadow-md">
+                        <IconCamera className="w-3.5 h-3.5 text-[#E2C275]" />
+                        <span>Dokumentasi Lapangan ({photosList.length})</span>
+                      </div>
+                    </div>
+                  );
+                }
+
+                // Case 3: Only designs exist -> show single header badge, completely hide Dokumentasi Lapangan
+                if (!hasPhotos && hasOutputs) {
+                  return (
+                    <div className="flex items-center gap-2 p-1 rounded-2xl bg-[#010B22] border border-[#C6A355]/40 w-fit">
+                      <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-mono-code font-bold bg-gradient-to-r from-[#6B0F1A] to-[#8A1422] text-[#F6DFB0] border border-[#E2C275]/60 shadow-md">
+                        <IconLayers className="w-3.5 h-3.5 text-[#E2C275]" />
+                        <span>Hasil Desain DDM ({outputsList.length})</span>
+                      </div>
+                    </div>
+                  );
+                }
+
+                return null;
+              })()}
 
               {/* TAB 1: POLAROID DOCUMENTATION PHOTOS */}
-              {activeModalTab === 'photos' && (
+              {((activeModalTab === 'photos' && (activeStop.photos || []).length > 0) ||
+                ((activeStop.outputs || []).length === 0 && (activeStop.photos || []).length > 0)) && (
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-[10px] sm:text-[11px] font-mono-code text-[#E2C275]">
@@ -676,65 +723,60 @@ export const JourneySection: React.FC<JourneySectionProps> = ({
                     </span>
                   </div>
 
-                  {activeStop.photos.length === 0 ? (
-                    <div className="p-8 text-center text-xs text-blue-200/70 border border-white/10 rounded-xl bg-[#021238]/60">
-                      Belum ada dokumentasi foto untuk pos ini.
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4">
-                      {activeStop.photos.map((photo, index) => {
-                        const organicTilt =
-                          index === 0
-                            ? 'md:-rotate-1'
-                            : index === 1
-                            ? 'md:rotate-1'
-                            : index === 2
-                            ? 'md:-rotate-1'
-                            : index === 3
-                            ? 'md:rotate-1'
-                            : 'md:-rotate-1';
-                        return (
-                          <button
-                            key={photo.id}
-                            onClick={() =>
-                              onOpenLightbox({
-                                title: photo.title,
-                                subtitle: `${activeStop.code} • ${activeStop.event}`,
-                                meta: photo.meta,
-                                desc: photo.caption,
-                                art: photo.scene
-                              })
-                            }
-                            className={`group text-left rounded-xl sm:rounded-2xl bg-[#021238] border-2 border-[#C6A355]/75 hover:border-[#E2C275] p-2 sm:p-2.5 transition-all duration-300 hover:rotate-0 hover:-translate-y-1 shadow-xl cursor-pointer ${organicTilt}`}
-                          >
-                            <div className="aspect-[4/3] w-full rounded-lg sm:rounded-xl overflow-hidden border border-white/10">
-                              <ArtPreview
-                                type={photo.scene}
-                                title={photo.title}
-                                meta={photo.meta}
-                              />
-                            </div>
-                            <div className="pt-2 sm:pt-2.5 px-0.5 sm:px-1">
-                              <span className="text-[9px] sm:text-[10px] font-mono-code text-[#E2C275]">
-                                FOTO 0{index + 1}
-                              </span>
-                              <p className="text-[11px] sm:text-xs font-bold text-white group-hover:text-[#E2C275] truncate mt-0.5">
-                                {photo.title}
-                              </p>
-                              <p className="text-[10px] sm:text-[11px] text-blue-200/75 line-clamp-2 mt-0.5">
-                                {photo.caption}
-                              </p>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4">
+                    {activeStop.photos.map((photo, index) => {
+                      const organicTilt =
+                        index === 0
+                          ? 'md:-rotate-1'
+                          : index === 1
+                          ? 'md:rotate-1'
+                          : index === 2
+                          ? 'md:-rotate-1'
+                          : index === 3
+                          ? 'md:rotate-1'
+                          : 'md:-rotate-1';
+                      return (
+                        <button
+                          key={photo.id}
+                          onClick={() =>
+                            onOpenLightbox({
+                              title: photo.title,
+                              subtitle: `${activeStop.code} • ${activeStop.event}`,
+                              meta: photo.meta,
+                              desc: photo.caption,
+                              art: photo.scene
+                            })
+                          }
+                          className={`group text-left rounded-xl sm:rounded-2xl bg-[#021238] border-2 border-[#C6A355]/75 hover:border-[#E2C275] p-2 sm:p-2.5 transition-all duration-300 hover:rotate-0 hover:-translate-y-1 shadow-xl cursor-pointer ${organicTilt}`}
+                        >
+                          <div className="aspect-[4/3] w-full rounded-lg sm:rounded-xl overflow-hidden border border-white/10">
+                            <ArtPreview
+                              type={photo.scene}
+                              title={photo.title}
+                              meta={photo.meta}
+                            />
+                          </div>
+                          <div className="pt-2 sm:pt-2.5 px-0.5 sm:px-1">
+                            <span className="text-[9px] sm:text-[10px] font-mono-code text-[#E2C275]">
+                              FOTO 0{index + 1}
+                            </span>
+                            <p className="text-[11px] sm:text-xs font-bold text-white group-hover:text-[#E2C275] truncate mt-0.5">
+                              {photo.title}
+                            </p>
+                            <p className="text-[10px] sm:text-[11px] text-blue-200/75 line-clamp-2 mt-0.5">
+                              {photo.caption}
+                            </p>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
 
               {/* TAB 2: DDM DESIGN OUTPUTS */}
-              {activeModalTab === 'outputs' && (
+              {((activeModalTab === 'outputs' && (activeStop.outputs || []).length > 0) ||
+                ((activeStop.photos || []).length === 0 && (activeStop.outputs || []).length > 0)) && (
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-[10px] sm:text-[11px] font-mono-code text-[#E2C275]">
@@ -742,63 +784,64 @@ export const JourneySection: React.FC<JourneySectionProps> = ({
                     </span>
                   </div>
 
-                  {activeStop.outputs.length === 0 ? (
-                    <div className="p-8 text-center text-xs text-blue-200/70 border border-white/10 rounded-xl bg-[#021238]/60">
-                      Belum ada aset desain DDM untuk pos ini.
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-5">
-                      {activeStop.outputs.map((out) => (
-                        <div
-                          key={out.id}
-                          onClick={() =>
-                            onOpenLightbox({
-                              title: out.title,
-                              subtitle: `${activeStop.code} • ${out.type}`,
-                              meta: `${out.dim} • ${out.tools.join(', ')}`,
-                              desc: `Karya desain yang diproduksi pada kepanitiaan ${activeStop.event}.`,
-                              art: out.art,
-                              colors: out.colors
-                            })
-                          }
-                          className="group rounded-xl sm:rounded-2xl bg-[#021238] border-2 border-[#C6A355]/75 hover:border-[#E2C275] overflow-hidden cursor-pointer transition-all hover:-translate-y-1.5 shadow-xl"
-                        >
-                          <div className="aspect-[16/10] w-full overflow-hidden border-b border-[#C6A355]/30">
-                            <ArtPreview type={out.art} title={out.title} />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-5">
+                    {activeStop.outputs.map((out) => (
+                      <div
+                        key={out.id}
+                        onClick={() =>
+                          onOpenLightbox({
+                            title: out.title,
+                            subtitle: `${activeStop.code} • ${out.type}`,
+                            meta: `${out.dim} • ${out.tools.join(', ')}`,
+                            desc: `Karya desain yang diproduksi pada kepanitiaan ${activeStop.event}.`,
+                            art: out.art,
+                            colors: out.colors
+                          })
+                        }
+                        className="group rounded-xl sm:rounded-2xl bg-[#021238] border-2 border-[#C6A355]/75 hover:border-[#E2C275] overflow-hidden cursor-pointer transition-all hover:-translate-y-1.5 shadow-xl"
+                      >
+                        <div className="aspect-[16/10] w-full overflow-hidden border-b border-[#C6A355]/30">
+                          <ArtPreview type={out.art} title={out.title} />
+                        </div>
+                        <div className="p-3.5 sm:p-4">
+                          <div className="flex items-center justify-between text-[9px] sm:text-[10px] font-mono-code text-[#E2C275] mb-1">
+                            <span>{out.type}</span>
+                            <span>{out.dim}</span>
                           </div>
-                          <div className="p-3.5 sm:p-4">
-                            <div className="flex items-center justify-between text-[9px] sm:text-[10px] font-mono-code text-[#E2C275] mb-1">
-                              <span>{out.type}</span>
-                              <span>{out.dim}</span>
-                            </div>
-                            <h5 className="font-bold text-xs sm:text-sm text-white group-hover:text-[#E2C275] truncate">
-                              {out.title}
-                            </h5>
+                          <h5 className="font-bold text-xs sm:text-sm text-white group-hover:text-[#E2C275] truncate">
+                            {out.title}
+                          </h5>
 
-                            <div className="mt-2.5 sm:mt-3 pt-2 sm:pt-2.5 border-t border-white/10 flex items-center justify-between">
-                              <span className="text-[9px] sm:text-[10px] font-mono-code text-blue-200/75 truncate pr-2">
-                                {out.tools.join(' • ')}
-                              </span>
-                              <div
-                                className="flex items-center gap-1 shrink-0"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                {out.colors.map((hex) => (
-                                  <button
-                                    key={hex}
-                                    onClick={() => onCopyHex(hex)}
-                                    title={`Salin ${hex}`}
-                                    className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full border border-white/40 cursor-pointer hover:scale-125 transition-transform"
-                                    style={{ backgroundColor: hex }}
-                                  />
-                                ))}
-                              </div>
+                          <div className="mt-2.5 sm:mt-3 pt-2 sm:pt-2.5 border-t border-white/10 flex items-center justify-between">
+                            <span className="text-[9px] sm:text-[10px] font-mono-code text-blue-200/75 truncate pr-2">
+                              {out.tools.join(' • ')}
+                            </span>
+                            <div
+                              className="flex items-center gap-1 shrink-0"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {out.colors.map((hex) => (
+                                <button
+                                  key={hex}
+                                  onClick={() => onCopyHex(hex)}
+                                  title={`Salin ${hex}`}
+                                  className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full border border-white/40 cursor-pointer hover:scale-125 transition-transform"
+                                  style={{ backgroundColor: hex }}
+                                />
+                              ))}
                             </div>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* EMPTY STATE (Neither photos nor outputs exist) */}
+              {(activeStop.photos || []).length === 0 && (activeStop.outputs || []).length === 0 && (
+                <div className="p-8 text-center text-xs text-blue-200/70 border border-white/10 rounded-xl bg-[#021238]/60">
+                  Belum ada dokumentasi foto atau aset desain untuk pos ini.
                 </div>
               )}
             </div>
