@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
+import { saveMedia } from '@/lib/media';
 
 export async function POST(request: Request) {
   try {
@@ -87,11 +88,31 @@ export async function POST(request: Request) {
       }
     }
 
-    const targetDir = path.join(process.cwd(), 'public', folder === 'icons' ? 'icons' : 'uploads');
-    await mkdir(targetDir, { recursive: true });
+    // Persist to Neon Postgres so files survive in serverless cloud (Vercel)
+    let mimeType = file.type;
+    if (!mimeType) {
+      if (ext === '.jpg' || ext === '.jpeg') mimeType = 'image/jpeg';
+      else if (ext === '.png') mimeType = 'image/png';
+      else if (ext === '.webp') mimeType = 'image/webp';
+      else if (ext === '.svg') mimeType = 'image/svg+xml';
+      else if (ext === '.pdf') mimeType = 'application/pdf';
+      else mimeType = 'application/octet-stream';
+    }
+    try {
+      await saveMedia(uniqueFileName, mimeType, finalBuffer);
+    } catch (dbErr) {
+      console.warn('Neon DB media save error:', dbErr);
+    }
 
-    const filePath = path.join(targetDir, uniqueFileName);
-    await writeFile(filePath, finalBuffer);
+    // Local disk write for development
+    try {
+      const targetDir = path.join(process.cwd(), 'public', folder === 'icons' ? 'icons' : 'uploads');
+      await mkdir(targetDir, { recursive: true });
+      const filePath = path.join(targetDir, uniqueFileName);
+      await writeFile(filePath, finalBuffer);
+    } catch (fsErr) {
+      console.warn('Filesystem write notice:', fsErr);
+    }
 
     const publicUrl = `/${folder === 'icons' ? 'icons' : 'uploads'}/${uniqueFileName}`;
 
@@ -124,8 +145,21 @@ export async function POST(request: Request) {
 
         const pngBuf = canvas.toBuffer('image/png');
         const thumbFileName = `${Date.now()}-${baseName}-thumb.png`;
-        const thumbFilePath = path.join(targetDir, thumbFileName);
-        await writeFile(thumbFilePath, pngBuf);
+
+        try {
+          await saveMedia(thumbFileName, 'image/png', pngBuf);
+        } catch (dbThumbErr) {
+          console.warn('Neon DB thumbnail save error:', dbThumbErr);
+        }
+
+        try {
+          const targetDir = path.join(process.cwd(), 'public', folder === 'icons' ? 'icons' : 'uploads');
+          const thumbFilePath = path.join(targetDir, thumbFileName);
+          await writeFile(thumbFilePath, pngBuf);
+        } catch (fsThumbErr) {
+          console.warn('Filesystem thumb write notice:', fsThumbErr);
+        }
+
         thumbnailUrl = `/${folder === 'icons' ? 'icons' : 'uploads'}/${thumbFileName}`;
       } catch (pdfErr) {
         console.warn('PDF automatic thumbnail generation error:', pdfErr);
