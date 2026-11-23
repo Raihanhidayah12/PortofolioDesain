@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import {
   IconCamera,
@@ -79,17 +79,34 @@ export const JourneySection: React.FC<JourneySectionProps> = ({
     let matchDivisi = true;
     let matchPosisi = true;
 
-    if (divisiFilter === 'ddm') matchDivisi = stop.roleTags.includes('ddm');
-    if (divisiFilter === 'foto') matchDivisi = stop.roleTags.includes('foto');
-    if (divisiFilter === 'operator') matchDivisi = stop.roleTags.includes('operator');
+    const tags = Array.isArray(stop.roleTags) ? stop.roleTags : [];
 
-    if (posisiFilter === 'staff') matchPosisi = stop.roleTags.includes('staff');
-    if (posisiFilter === 'koord') matchPosisi = stop.roleTags.includes('koord');
-    if (posisiFilter === 'wakil') matchPosisi = stop.roleTags.includes('wakil');
-    if (posisiFilter === 'volunteer') matchPosisi = stop.roleTags.includes('volunteer');
+    if (divisiFilter) {
+      matchDivisi = tags.includes(divisiFilter);
+    }
+
+    if (posisiFilter) {
+      matchPosisi = tags.includes(posisiFilter);
+    }
 
     return matchDivisi && matchPosisi;
   });
+
+  const knownTags = useMemo(() => {
+    return new Set(['ddm', 'foto', 'operator', 'staff', 'koord', 'wakil', 'volunteer']);
+  }, []);
+
+  const extraTags = useMemo(() => {
+    const list = new Set<string>();
+    stops.forEach((s) => {
+      (s.roleTags || []).forEach((t) => {
+        if (t && !knownTags.has(t.toLowerCase())) {
+          list.add(t.toLowerCase());
+        }
+      });
+    });
+    return Array.from(list);
+  }, [stops, knownTags]);
 
   const visibleMapStops = filteredMapStops;
 
@@ -197,6 +214,26 @@ export const JourneySection: React.FC<JourneySectionProps> = ({
             </button>
           ))}
         </div>
+
+        {/* Dynamic Extra Tags Filter (Jika admin menambahkan tag kustom baru) */}
+        {extraTags.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 pt-2.5 border-t border-white/10">
+            <span className="text-[10px] sm:text-[11px] font-mono-code text-[#E2C275] mr-1">TAG LAIN:</span>
+            {extraTags.map((tag) => (
+              <button
+                key={tag}
+                onClick={() => setDivisiFilter(divisiFilter === tag ? null : tag)}
+                className={`px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-bold border transition-all cursor-pointer ${
+                  divisiFilter === tag
+                    ? 'bg-[#6B0F1A] text-[#F6DFB0] border-[#E2C275] shadow-lg scale-105'
+                    : 'bg-[#021238]/80 text-blue-100 border-[#C6A355]/45 hover:border-[#E2C275]'
+                }`}
+              >
+                #{tag.toUpperCase()}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* AUTHENTIC TREASURE MAP CANVAS (PETA HARTA KARUN BERLIKU) */}

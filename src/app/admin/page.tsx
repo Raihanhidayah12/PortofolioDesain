@@ -1141,6 +1141,18 @@ export default function AdminPage() {
                           {s.event}
                         </h3>
                         <p className="text-xs font-semibold text-[#E2C275] mt-1">{s.role}</p>
+
+                        {/* Filter Tags Badges */}
+                        <div className="flex flex-wrap gap-1 mt-2.5">
+                          {(s.roleTags || []).map((t) => (
+                            <span
+                              key={t}
+                              className="px-2 py-0.5 rounded-md bg-[#010D2E] border border-[#E2C275]/40 text-[9px] font-mono-code text-[#F6DFB0]"
+                            >
+                              #{t}
+                            </span>
+                          ))}
+                        </div>
                       </div>
 
                       {/* Footer Actions */}
@@ -2112,6 +2124,110 @@ export default function AdminPage() {
                       placeholder="Ringkasan pengalaman..."
                       className="w-full px-3 py-2 rounded-xl bg-[#010D2E] border border-white/20 text-white leading-relaxed"
                     />
+                  </div>
+
+                  {/* TAG FILTER KEPANITIAAN: DIVISI & POSISI */}
+                  <div className="p-4 rounded-2xl bg-[#010D2E] border border-[#C6A355]/40 space-y-3.5">
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="block text-[#E2C275] font-mono-code font-bold">
+                          TAG DIVISI (Filter Peta Perjalanan)
+                        </label>
+                        <span className="text-[10px] text-blue-200/60 font-mono-code">Bisa pilih lebih dari satu</span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {[
+                          { id: 'ddm', label: 'DDM / Desain' },
+                          { id: 'foto', label: 'Foto / Dokumentasi' },
+                          { id: 'operator', label: 'Operator' },
+                        ].map((d) => {
+                          const isSelected = (editingStop.roleTags || []).includes(d.id);
+                          return (
+                            <button
+                              key={d.id}
+                              type="button"
+                              onClick={() => {
+                                const current = editingStop.roleTags || [];
+                                const next = isSelected
+                                  ? current.filter((t) => t !== d.id)
+                                  : [...current, d.id];
+                                setEditingStop({ ...editingStop, roleTags: next });
+                              }}
+                              className={`px-3 py-1.5 rounded-full text-xs font-mono-code font-bold border transition-all cursor-pointer ${
+                                isSelected
+                                  ? 'bg-[#6B0F1A] text-[#F6DFB0] border-[#E2C275] shadow-md scale-105'
+                                  : 'bg-[#021238] text-blue-200/60 border-white/20 hover:border-white/40'
+                              }`}
+                            >
+                              {isSelected ? '✓ ' : '+ '}
+                              {d.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="pt-2.5 border-t border-white/10">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="block text-[#E2C275] font-mono-code font-bold">
+                          TAG POSISI (Filter Peta Perjalanan)
+                        </label>
+                        <span className="text-[10px] text-blue-200/60 font-mono-code">Bisa pilih lebih dari satu</span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {[
+                          { id: 'staff', label: 'Staff' },
+                          { id: 'koord', label: 'Koordinator' },
+                          { id: 'wakil', label: 'Wakil Koordinator' },
+                          { id: 'volunteer', label: 'Volunteer' },
+                        ].map((p) => {
+                          const isSelected = (editingStop.roleTags || []).includes(p.id);
+                          return (
+                            <button
+                              key={p.id}
+                              type="button"
+                              onClick={() => {
+                                const current = editingStop.roleTags || [];
+                                const next = isSelected
+                                  ? current.filter((t) => t !== p.id)
+                                  : [...current, p.id];
+                                setEditingStop({ ...editingStop, roleTags: next });
+                              }}
+                              className={`px-3 py-1.5 rounded-full text-xs font-mono-code font-bold border transition-all cursor-pointer ${
+                                isSelected
+                                  ? 'bg-[#6B0F1A] text-[#F6DFB0] border-[#E2C275] shadow-md scale-105'
+                                  : 'bg-[#021238] text-blue-200/60 border-white/20 hover:border-white/40'
+                              }`}
+                            >
+                              {isSelected ? '✓ ' : '+ '}
+                              {p.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="pt-2.5 border-t border-white/10">
+                      <label className="block text-[#E2C275] font-mono-code font-bold mb-1">
+                        SEMUA TAG AKTIF / TAG KUSTOM (pisahkan dengan koma)
+                      </label>
+                      <input
+                        type="text"
+                        value={(editingStop.roleTags || []).join(', ')}
+                        onChange={(e) => {
+                          const tags = e.target.value
+                            .split(',')
+                            .map((t) => t.trim().toLowerCase())
+                            .filter(Boolean);
+                          setEditingStop({ ...editingStop, roleTags: tags });
+                        }}
+                        placeholder="ddm, foto, staff, humas, logistik..."
+                        className="w-full px-3 py-2 rounded-xl bg-[#021238] border border-white/20 text-white font-mono-code text-xs"
+                      />
+                      <span className="text-[10px] text-blue-200/60 mt-1 block font-mono-code">
+                        Pos ini akan muncul jika pengunjung memilih salah satu filter di atas pada peta.
+                      </span>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
