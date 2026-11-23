@@ -74,7 +74,7 @@ export default function AdminPage() {
   const [authError, setAuthError] = useState('');
 
   // Active Tab & Mobile Drawer
-  const [activeTab, setActiveTab] = useState<'tools' | 'journey' | 'certificates' | 'gallery' | 'inquiries'>('tools');
+  const [activeTab, setActiveTab] = useState<'tools' | 'journey' | 'certificates' | 'gallery' | 'photography' | 'inquiries'>('tools');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Search & Filter States
@@ -485,8 +485,16 @@ export default function AdminPage() {
     return result;
   }, [stops, searchQuery, journeyRouteFilter]);
 
-  const filteredWorks = useMemo(() => {
-    let result = works;
+  const designWorks = useMemo(() => {
+    return works.filter((w) => w.category !== 'photography');
+  }, [works]);
+
+  const photographyWorks = useMemo(() => {
+    return works.filter((w) => w.category === 'photography');
+  }, [works]);
+
+  const filteredDesignWorks = useMemo(() => {
+    let result = designWorks;
     if (galleryCategoryFilter !== 'all') {
       result = result.filter((w) => w.category === galleryCategoryFilter);
     }
@@ -495,11 +503,29 @@ export default function AdminPage() {
       result = result.filter(
         (w) =>
           w.title.toLowerCase().includes(q) ||
-          w.committee.toLowerCase().includes(q)
+          w.committee.toLowerCase().includes(q) ||
+          (w.desc && w.desc.toLowerCase().includes(q))
       );
     }
     return result;
-  }, [works, searchQuery, galleryCategoryFilter]);
+  }, [designWorks, searchQuery, galleryCategoryFilter]);
+
+  const filteredPhotographyWorks = useMemo(() => {
+    let result = photographyWorks;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(
+        (w) =>
+          w.title.toLowerCase().includes(q) ||
+          w.committee.toLowerCase().includes(q) ||
+          (w.desc && w.desc.toLowerCase().includes(q)) ||
+          w.tools.some((t) => t.toLowerCase().includes(q))
+      );
+    }
+    return result;
+  }, [photographyWorks, searchQuery]);
+
+  const filteredWorks = filteredDesignWorks;
 
   const filteredCertificates = useMemo(() => {
     let result = certificates;
@@ -747,13 +773,24 @@ export default function AdminPage() {
               },
               {
                 id: 'gallery' as const,
-                label: 'Galeri Karya',
-                count: works.length,
+                label: 'Galeri Desain',
+                count: designWorks.length,
                 icon: (
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2" strokeWidth="2" />
                     <circle cx="8.5" cy="8.5" r="1.5" strokeWidth="2" />
                     <polyline points="21 15 16 10 5 21" strokeWidth="2" />
+                  </svg>
+                ),
+              },
+              {
+                id: 'photography' as const,
+                label: 'Fotografi Acara',
+                count: photographyWorks.length,
+                icon: (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                 ),
               },
@@ -853,7 +890,12 @@ export default function AdminPage() {
             <span className="font-display font-bold text-sm text-white">Han Studio Admin</span>
           </div>
           <span className="text-xs font-mono-code text-[#E2C275] font-bold uppercase tracking-wider">
-            {activeTab}
+            {activeTab === 'tools' && 'Creative Tools'}
+            {activeTab === 'journey' && 'Pos Ekspedisi'}
+            {activeTab === 'certificates' && 'Sertifikat'}
+            {activeTab === 'gallery' && 'Galeri Desain'}
+            {activeTab === 'photography' && 'Fotografi Acara'}
+            {activeTab === 'inquiries' && 'Pesan Masuk'}
           </span>
         </div>
 
@@ -1348,7 +1390,7 @@ export default function AdminPage() {
           )}
 
           {/* ================================================================= */}
-          {/* TAB 3: GALLERY WORKS */}
+          {/* TAB 3: GALLERY WORKS (Galeri Desain Grafis) */}
           {/* ================================================================= */}
           {activeTab === 'gallery' && (
             <div className="space-y-6">
@@ -1357,21 +1399,20 @@ export default function AdminPage() {
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="px-2.5 py-0.5 rounded-full bg-[#6B0F1A] border border-[#E2C275] text-[9px] font-mono-code font-bold text-[#F6DFB0]">
-                      ✦ ART &amp; IDENTITY
+                      ✦ VISUAL DESIGN VAULT
                     </span>
-                    <span className="text-xs font-mono-code text-blue-200/70">{works.length} karya galeri</span>
+                    <span className="text-xs font-mono-code text-blue-200/70">{designWorks.length} karya desain</span>
                   </div>
-                  <h2 className="font-display font-bold text-2xl text-white tracking-tight">Galeri Karya</h2>
+                  <h2 className="font-display font-bold text-2xl text-white tracking-tight">Galeri Desain Grafis</h2>
                 </div>
 
                 <div className="flex items-center gap-2.5 flex-wrap">
                   <div className="flex items-center gap-1 p-1 rounded-xl bg-[#010D2E] border border-white/10 text-[11px] font-mono-code">
                     {[
-                      { label: 'Semua', value: 'all' },
+                      { label: 'Semua Desain', value: 'all' },
                       { label: 'Poster', value: 'poster' },
-                      { label: 'Feed', value: 'feed' },
+                      { label: 'Feed (4:5)', value: 'feed' },
                       { label: 'Identity & Print', value: 'identity' },
-                      { label: 'Fotografi', value: 'photography' },
                     ].map((c) => (
                       <button
                         key={c.value}
@@ -1391,14 +1432,14 @@ export default function AdminPage() {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Cari karya..."
+                    placeholder="Cari karya desain..."
                     className="w-40 sm:w-48 px-3 py-2 rounded-xl bg-[#010D2E] border border-[#C6A355]/50 text-white placeholder-blue-300/40 text-xs font-mono-code focus:outline-none focus:border-[#E2C275]"
                   />
 
                   <button
                     onClick={() =>
                       setEditingWork({
-                        id: `w-${works.length + 1}`,
+                        id: `w-${Date.now()}`,
                         title: '',
                         category: 'poster',
                         categoryLabel: 'Event Poster',
@@ -1414,19 +1455,19 @@ export default function AdminPage() {
                     }
                     className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#6B0F1A] via-[#8A1422] to-[#6B0F1A] border border-[#E2C275] text-xs font-mono-code font-bold text-[#F6DFB0] shadow-md hover:brightness-110 cursor-pointer shrink-0 transition-all"
                   >
-                    + Tambah Karya
+                    + Tambah Desain Baru
                   </button>
                 </div>
               </div>
 
               {/* Gallery Works Cards */}
-              {filteredWorks.length === 0 ? (
+              {filteredDesignWorks.length === 0 ? (
                 <div className="rounded-3xl bg-[#021238]/60 border border-[#C6A355]/40 p-12 text-center text-xs text-blue-200/60">
-                  Tidak ada karya yang cocok.
+                  Tidak ada karya desain yang cocok.
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredWorks.map((w) => (
+                  {filteredDesignWorks.map((w) => (
                     <div
                       key={w.id}
                       className="rounded-[26px] bg-gradient-to-br from-[#052368]/95 via-[#03174C]/95 to-[#010C24] border-2 border-[#C6A355]/50 hover:border-[#E2C275] overflow-hidden flex flex-col justify-between shadow-[0_12px_40px_rgba(0,0,0,0.6)] hover:-translate-y-1 transition-all duration-300 group"
@@ -1452,6 +1493,163 @@ export default function AdminPage() {
 
                       <div className="p-4 sm:p-5 pt-0 border-t border-white/10 flex items-center justify-between pt-3">
                         <span className="text-[10px] font-mono-code text-blue-200/60">{w.dim}</span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setEditingWork(w)}
+                            className="px-3 py-1.5 rounded-xl bg-blue-900/50 hover:bg-blue-800 border border-blue-400/50 text-xs font-mono-code text-blue-200 cursor-pointer transition-colors shadow"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteWork(w.id, w.title)}
+                            className="px-3 py-1.5 rounded-xl bg-rose-950/50 hover:bg-rose-900 border border-rose-500/50 text-xs font-mono-code text-rose-300 cursor-pointer transition-colors shadow"
+                          >
+                            Hapus
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ================================================================= */}
+          {/* TAB 4: PHOTOGRAPHY GALLERY (Galeri Fotografi Acara) */}
+          {/* ================================================================= */}
+          {activeTab === 'photography' && (
+            <div className="space-y-6">
+              {/* Header Bar */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-3xl bg-gradient-to-r from-[#052368]/90 via-[#03174C]/95 to-[#010C24]/98 border-2 border-[#E2C275] shadow-[0_16px_50px_rgba(0,0,0,0.5)]">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="px-2.5 py-0.5 rounded-full bg-[#6B0F1A] border border-[#E2C275] text-[9px] font-mono-code font-bold text-[#F6DFB0]">
+                      ✦ PHOTOGRAPHY VAULT
+                    </span>
+                    <span className="text-xs font-mono-code text-blue-200/70">
+                      {photographyWorks.length} foto dokumentasi aktif
+                    </span>
+                  </div>
+                  <h2 className="font-display font-bold text-2xl text-white tracking-tight">
+                    Galeri Fotografi Acara
+                  </h2>
+                </div>
+
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Cari foto acara / kepanitiaan..."
+                    className="w-48 sm:w-64 px-3.5 py-2 rounded-xl bg-[#010D2E] border border-[#C6A355]/50 text-white placeholder-blue-300/40 text-xs font-mono-code focus:outline-none focus:border-[#E2C275]"
+                  />
+
+                  <button
+                    onClick={() =>
+                      setEditingWork({
+                        id: `photo-${Date.now()}`,
+                        title: '',
+                        category: 'photography',
+                        categoryLabel: 'Dokumentasi Fotografi',
+                        committee: '',
+                        spanClass: 'md:col-span-6 lg:col-span-4',
+                        aspectClass: 'aspect-[3/2]',
+                        dim: '3:2 • 24 MP',
+                        tools: ['Canon EOS', 'Adobe Lightroom'],
+                        colors: ['#041A4D', '#E2C275', '#6B0F1A'],
+                        desc: '',
+                        art: '',
+                      })
+                    }
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#6B0F1A] via-[#8A1422] to-[#6B0F1A] border border-[#E2C275] text-xs font-mono-code font-bold text-[#F6DFB0] shadow-md hover:brightness-110 cursor-pointer shrink-0 transition-all flex items-center gap-1.5"
+                  >
+                    <span>📸</span>
+                    <span>+ Tambah Foto Acara</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Photography Cards */}
+              {filteredPhotographyWorks.length === 0 ? (
+                <div className="rounded-[28px] bg-[#021238]/70 border-2 border-dashed border-[#C6A355]/40 p-10 sm:p-14 text-center flex flex-col items-center justify-center">
+                  <div className="w-16 h-16 rounded-2xl bg-[#6B0F1A] border border-[#E2C275] flex items-center justify-center text-2xl text-[#E2C275] shadow-lg mb-3">
+                    📸
+                  </div>
+                  <h3 className="font-display font-bold text-lg text-white mb-1">
+                    Belum Ada Foto Dokumentasi Acara
+                  </h3>
+                  <p className="text-xs text-blue-200/70 max-w-md leading-relaxed mb-4">
+                    Foto yang ditambahkan di tab ini akan langsung ditampilkan pada bagian{' '}
+                    <strong className="text-[#E2C275]">Galeri Fotografi Acara</strong> di halaman utama portofolio.
+                  </p>
+                  <button
+                    onClick={() =>
+                      setEditingWork({
+                        id: `photo-${Date.now()}`,
+                        title: '',
+                        category: 'photography',
+                        categoryLabel: 'Dokumentasi Fotografi',
+                        committee: '',
+                        spanClass: 'md:col-span-6 lg:col-span-4',
+                        aspectClass: 'aspect-[3/2]',
+                        dim: '3:2 • 24 MP',
+                        tools: ['Canon EOS', 'Adobe Lightroom'],
+                        colors: ['#041A4D', '#E2C275', '#6B0F1A'],
+                        desc: '',
+                        art: '',
+                      })
+                    }
+                    className="px-5 py-2.5 rounded-full bg-[#6B0F1A] hover:bg-[#8A1422] border border-[#E2C275] text-xs font-mono-code font-bold text-[#F6DFB0] shadow-lg transition-all cursor-pointer"
+                  >
+                    + Upload Foto Dokumentasi Pertama
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+                  {filteredPhotographyWorks.map((w) => (
+                    <div
+                      key={w.id}
+                      className="rounded-[26px] bg-gradient-to-br from-[#052368]/95 via-[#03174C]/95 to-[#010C24] border-2 border-[#C6A355]/50 hover:border-[#E2C275] overflow-hidden flex flex-col justify-between shadow-[0_12px_40px_rgba(0,0,0,0.6)] hover:-translate-y-1 transition-all duration-300 group"
+                    >
+                      <div>
+                        {/* Visual Thumbnail */}
+                        <div className="aspect-[3/2] w-full bg-[#010D2E] border-b-2 border-[#C6A355]/40 overflow-hidden relative">
+                          <ArtPreview type={w.art} title={w.title} />
+                          <span className="absolute top-3 left-3 px-3 py-1 rounded-full bg-[#6B0F1A]/95 border border-[#E2C275] text-[10px] font-mono-code font-bold text-[#F6DFB0] shadow-md flex items-center gap-1">
+                            <span>📸</span>
+                            <span>{w.committee}</span>
+                          </span>
+                        </div>
+
+                        <div className="p-4 sm:p-5">
+                          <div className="flex items-center justify-between text-[10px] font-mono-code text-[#E2C275] mb-1">
+                            <span>{w.dim}</span>
+                            <span className="text-blue-200/70 truncate max-w-[150px]">{w.tools.join(', ')}</span>
+                          </div>
+                          <h3 className="font-display font-bold text-base text-white line-clamp-1 group-hover:text-[#E2C275] transition-colors">
+                            {w.title}
+                          </h3>
+                          {w.desc && (
+                            <p className="text-xs text-blue-100/75 line-clamp-2 mt-1 leading-relaxed">
+                              {w.desc}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="p-4 sm:p-5 pt-0 border-t border-white/10 flex items-center justify-between pt-3">
+                        {/* Palette chips */}
+                        <div className="flex items-center gap-1">
+                          {w.colors.map((c) => (
+                            <span
+                              key={c}
+                              style={{ backgroundColor: c }}
+                              className="w-3.5 h-3.5 rounded-full border border-white/40"
+                              title={c}
+                            />
+                          ))}
+                        </div>
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => setEditingWork(w)}
@@ -2188,9 +2386,15 @@ export default function AdminPage() {
 
             <div className="shrink-0 flex items-center justify-between p-5 border-b border-[#C6A355]/40 bg-[#03174C]/95 relative z-10">
               <div>
-                <span className="text-[10px] font-mono-code text-[#E2C275] block font-bold">✦ GALLERY EDITOR ✦</span>
+                <span className="text-[10px] font-mono-code text-[#E2C275] block font-bold">
+                  {editingWork.category === 'photography' ? '✦ PHOTOGRAPHY EDITOR ✦' : '✦ GALLERY EDITOR ✦'}
+                </span>
                 <h3 className="font-display font-bold text-lg text-white">
-                  {editingWork.title ? `Edit: ${editingWork.title}` : 'Tambah Karya Galeri'}
+                  {editingWork.title
+                    ? `Edit: ${editingWork.title}`
+                    : editingWork.category === 'photography'
+                    ? 'Tambah Foto Dokumentasi Acara'
+                    : 'Tambah Karya Galeri'}
                 </h3>
               </div>
               <button
@@ -2211,7 +2415,7 @@ export default function AdminPage() {
                     required
                     value={editingWork.id || ''}
                     onChange={(e) => setEditingWork({ ...editingWork, id: e.target.value })}
-                    placeholder="w-01"
+                    placeholder={editingWork.category === 'photography' ? 'photo-01' : 'w-01'}
                     className="w-full px-3 py-2 rounded-xl bg-[#010D2E] border border-white/20 text-white font-mono-code"
                   />
                 </div>
@@ -2224,34 +2428,42 @@ export default function AdminPage() {
                       let label = 'Event Poster';
                       if (cat === 'feed') label = 'Social Media Feed';
                       if (cat === 'identity') label = 'Identity & Print';
-                      if (cat === 'photography') label = 'Event Photography';
+                      if (cat === 'photography') label = 'Dokumentasi Fotografi';
                       setEditingWork({ ...editingWork, category: cat, categoryLabel: label });
                     }}
                     className="w-full px-3 py-2 rounded-xl bg-[#010D2E] border border-white/20 text-white"
                   >
+                    <option value="photography">Dokumentasi Fotografi Acara</option>
                     <option value="poster">Poster Event</option>
                     <option value="feed">Social Media Feed (4:5)</option>
                     <option value="identity">Identity &amp; Print</option>
-                    <option value="photography">Dokumentasi Fotografi</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className="block text-[#E2C275] font-mono-code font-bold mb-1">JUDUL KARYA</label>
+                <label className="block text-[#E2C275] font-mono-code font-bold mb-1">
+                  {editingWork.category === 'photography' ? 'JUDUL FOTO / DOKUMENTASI' : 'JUDUL KARYA'}
+                </label>
                 <input
                   type="text"
                   required
                   value={editingWork.title || ''}
                   onChange={(e) => setEditingWork({ ...editingWork, title: e.target.value })}
-                  placeholder="Judul karya..."
+                  placeholder={
+                    editingWork.category === 'photography'
+                      ? 'Sorotan Panggung Utama Malam Puncak...'
+                      : 'Judul karya...'
+                  }
                   className="w-full px-3 py-2 rounded-xl bg-[#010D2E] border border-white/20 text-white text-sm"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[#E2C275] font-mono-code font-bold mb-1">KEPANITIAAN / ACARA</label>
+                  <label className="block text-[#E2C275] font-mono-code font-bold mb-1">
+                    {editingWork.category === 'photography' ? 'NAMA ACARA / KEPANITIAAN' : 'KEPANITIAAN / ACARA'}
+                  </label>
                   <input
                     type="text"
                     required
@@ -2262,13 +2474,15 @@ export default function AdminPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-[#E2C275] font-mono-code font-bold mb-1">DIMENSI UKURAN</label>
+                  <label className="block text-[#E2C275] font-mono-code font-bold mb-1">
+                    {editingWork.category === 'photography' ? 'RESOLUSI / DIMENSI' : 'DIMENSI UKURAN'}
+                  </label>
                   <input
                     type="text"
                     required
                     value={editingWork.dim || ''}
                     onChange={(e) => setEditingWork({ ...editingWork, dim: e.target.value })}
-                    placeholder="1080 × 1350 px"
+                    placeholder={editingWork.category === 'photography' ? '3:2 • 24 MP' : '1080 × 1350 px'}
                     className="w-full px-3 py-2 rounded-xl bg-[#010D2E] border border-white/20 text-white font-mono-code"
                   />
                 </div>
@@ -2283,6 +2497,9 @@ export default function AdminPage() {
                     onChange={(e) => setEditingWork({ ...editingWork, aspectClass: e.target.value })}
                     className="w-full px-3 py-2 rounded-xl bg-[#010D2E] border border-white/20 text-white text-xs font-mono-code"
                   >
+                    <option value="aspect-[3/2]">Landscape Kamera 3:2</option>
+                    <option value="aspect-[16/9]">Landscape Lebar 16:9</option>
+                    <option value="aspect-[4/3]">Landscape Standar 4:3</option>
                     <option value="aspect-[16/10]">Landscape 16:10</option>
                     <option value="aspect-[4/5]">Feed Instagram 4:5</option>
                     <option value="aspect-[9/16]">Poster / Banner 9:16</option>
@@ -2306,7 +2523,9 @@ export default function AdminPage() {
               {/* Tools Input */}
               <div>
                 <label className="block text-[#E2C275] font-mono-code font-bold mb-1">
-                  TOOLS YANG DIGUNAKAN (pisahkan dengan koma)
+                  {editingWork.category === 'photography'
+                    ? 'KAMERA / LENSA / TOOLS (pisahkan dengan koma)'
+                    : 'TOOLS YANG DIGUNAKAN (pisahkan dengan koma)'}
                 </label>
                 <input
                   type="text"
@@ -2320,7 +2539,11 @@ export default function AdminPage() {
                         .filter(Boolean),
                     })
                   }
-                  placeholder="Figma, Lightroom, Photoshop"
+                  placeholder={
+                    editingWork.category === 'photography'
+                      ? 'Canon EOS R6, 24-70mm f/2.8, Adobe Lightroom'
+                      : 'Figma, Lightroom, Photoshop'
+                  }
                   className="w-full px-3 py-2 rounded-xl bg-[#010D2E] border border-white/20 text-white font-mono-code text-xs"
                 />
               </div>
@@ -2362,20 +2585,30 @@ export default function AdminPage() {
               {/* Description Input */}
               <div>
                 <label className="block text-[#E2C275] font-mono-code font-bold mb-1">
-                  DESKRIPSI KARYA (OPSIONAL)
+                  {editingWork.category === 'photography'
+                    ? 'KETERANGAN / CERITA FOTO (OPSIONAL)'
+                    : 'DESKRIPSI KARYA (OPSIONAL)'}
                 </label>
                 <textarea
                   rows={2}
                   value={editingWork.desc || ''}
                   onChange={(e) => setEditingWork({ ...editingWork, desc: e.target.value })}
-                  placeholder="Deskripsi konsep visual, tujuan desain, atau konteks acara..."
+                  placeholder={
+                    editingWork.category === 'photography'
+                      ? 'Ceritakan sorotan panggung, pencahayaan, atau momen acara pada foto ini...'
+                      : 'Deskripsi konsep visual, tujuan desain, atau konteks acara...'
+                  }
                   className="w-full px-3 py-2 rounded-xl bg-[#010D2E] border border-white/20 text-white text-xs leading-relaxed"
                 />
               </div>
 
               {/* Cover Art Upload Zone */}
               <div className="p-3.5 rounded-2xl bg-[#010D2E] border border-[#C6A355]/30 space-y-2.5">
-                <label className="block text-[#E2C275] font-mono-code font-bold">GAMBAR COVER / PREVIEW</label>
+                <label className="block text-[#E2C275] font-mono-code font-bold">
+                  {editingWork.category === 'photography'
+                    ? 'FILE FOTO DOKUMENTASI (JPG / PNG / WEBP)'
+                    : 'GAMBAR COVER / PREVIEW'}
+                </label>
                 <div className="flex gap-2 items-center">
                   <input
                     type="text"
