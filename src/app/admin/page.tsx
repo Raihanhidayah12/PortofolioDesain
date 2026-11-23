@@ -2140,6 +2140,14 @@ export default function AdminPage() {
                           { id: 'ddm', label: 'DDM / Desain' },
                           { id: 'foto', label: 'Foto / Dokumentasi' },
                           { id: 'operator', label: 'Operator' },
+                          { id: 'lapangan', label: 'Lapangan / Korlap' },
+                          { id: 'acara', label: 'Acara / Rundown' },
+                          { id: 'humas', label: 'Humas / LO' },
+                          { id: 'logistik', label: 'Logistik / Perkap' },
+                          { id: 'konsumsi', label: 'Konsumsi' },
+                          { id: 'sponsorship', label: 'Sponsorship / Danus' },
+                          { id: 'keamanan', label: 'Keamanan' },
+                          { id: 'dekorasi', label: 'Dekorasi' },
                         ].map((d) => {
                           const isSelected = (editingStop.roleTags || []).includes(d.id);
                           return (
@@ -2179,7 +2187,10 @@ export default function AdminPage() {
                           { id: 'staff', label: 'Staff' },
                           { id: 'koord', label: 'Koordinator' },
                           { id: 'wakil', label: 'Wakil Koordinator' },
+                          { id: 'ketua', label: 'Ketua Pelaksana' },
+                          { id: 'wakil_ketua', label: 'Wakil Ketua' },
                           { id: 'volunteer', label: 'Volunteer' },
+                          { id: 'bph', label: 'BPH / Pengurus' },
                         ].map((p) => {
                           const isSelected = (editingStop.roleTags || []).includes(p.id);
                           return (
@@ -2209,7 +2220,7 @@ export default function AdminPage() {
 
                     <div className="pt-2.5 border-t border-white/10">
                       <label className="block text-[#E2C275] font-mono-code font-bold mb-1">
-                        SEMUA TAG AKTIF / TAG KUSTOM (pisahkan dengan koma)
+                        SEMUA TAG AKTIF / TAMBAH DIVISI &amp; POSISI KUSTOM (pisahkan dengan koma)
                       </label>
                       <input
                         type="text"
@@ -2221,11 +2232,11 @@ export default function AdminPage() {
                             .filter(Boolean);
                           setEditingStop({ ...editingStop, roleTags: tags });
                         }}
-                        placeholder="ddm, foto, staff, humas, logistik..."
+                        placeholder="ddm, foto, staff, lapangan, acara, humas, logistik..."
                         className="w-full px-3 py-2 rounded-xl bg-[#021238] border border-white/20 text-white font-mono-code text-xs"
                       />
                       <span className="text-[10px] text-blue-200/60 mt-1 block font-mono-code">
-                        Pos ini akan muncul jika pengunjung memilih salah satu filter di atas pada peta.
+                        Tip: Jika kamu memasukkan divisi baru di sini (misal: <em>acara</em> atau <em>lapangan</em>), tombol filternya akan langsung muncul otomatis di baris filter DIVISI pada peta halaman utama!
                       </span>
                     </div>
                   </div>

@@ -10,6 +10,7 @@ import {
 import { ArtPreview } from './ArtPreview';
 import { TreasureStop, LightboxItem } from '@/types';
 import { usePortfolioSync } from '@/lib/usePortfolioSync';
+import { POSITION_KEYS, formatTagLabel } from '@/lib/tags';
 
 interface JourneySectionProps {
   onOpenLightbox: (item: LightboxItem) => void;
@@ -92,21 +93,58 @@ export const JourneySection: React.FC<JourneySectionProps> = ({
     return matchDivisi && matchPosisi;
   });
 
-  const knownTags = useMemo(() => {
-    return new Set(['ddm', 'foto', 'operator', 'staff', 'koord', 'wakil', 'volunteer']);
-  }, []);
+  // Dynamic Division filters (DDM, Foto, Operator, plus any custom divisions present in database)
+  const divisionFilterOptions = useMemo(() => {
+    const list: Array<{ id: string | null; label: string }> = [
+      { id: null, label: 'Semua' },
+      { id: 'ddm', label: 'DDM / Desain' },
+      { id: 'foto', label: 'Foto / Dokumentasi' },
+      { id: 'operator', label: 'Operator' },
+    ];
+    const existingIds = new Set(['ddm', 'foto', 'operator']);
 
-  const extraTags = useMemo(() => {
-    const list = new Set<string>();
     stops.forEach((s) => {
       (s.roleTags || []).forEach((t) => {
-        if (t && !knownTags.has(t.toLowerCase())) {
-          list.add(t.toLowerCase());
+        const clean = t.toLowerCase().trim();
+        if (clean && !POSITION_KEYS.has(clean) && !existingIds.has(clean)) {
+          existingIds.add(clean);
+          list.push({
+            id: clean,
+            label: formatTagLabel(clean, 'divisi'),
+          });
         }
       });
     });
-    return Array.from(list);
-  }, [stops, knownTags]);
+
+    return list;
+  }, [stops]);
+
+  // Dynamic Position filters (Staff, Koordinator, Wakil, etc. plus any custom positions present in database)
+  const positionFilterOptions = useMemo(() => {
+    const list: Array<{ id: string | null; label: string }> = [
+      { id: null, label: 'Semua' },
+      { id: 'staff', label: 'Staff' },
+      { id: 'koord', label: 'Koordinator' },
+      { id: 'wakil', label: 'Wakil Koordinator' },
+      { id: 'volunteer', label: 'Volunteer' },
+    ];
+    const existingIds = new Set(['staff', 'koord', 'wakil', 'volunteer']);
+
+    stops.forEach((s) => {
+      (s.roleTags || []).forEach((t) => {
+        const clean = t.toLowerCase().trim();
+        if (clean && POSITION_KEYS.has(clean) && !existingIds.has(clean)) {
+          existingIds.add(clean);
+          list.push({
+            id: clean,
+            label: formatTagLabel(clean, 'posisi'),
+          });
+        }
+      });
+    });
+
+    return list;
+  }, [stops]);
 
   const visibleMapStops = filteredMapStops;
 
@@ -171,14 +209,9 @@ export const JourneySection: React.FC<JourneySectionProps> = ({
         {/* Divisi Filter */}
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-[10px] sm:text-[11px] font-mono-code text-[#E2C275] mr-1">DIVISI:</span>
-          {[
-            { id: null, label: 'Semua' },
-            { id: 'ddm', label: 'DDM / Desain' },
-            { id: 'foto', label: 'Foto / Dokumentasi' },
-            { id: 'operator', label: 'Operator' }
-          ].map((item) => (
+          {divisionFilterOptions.map((item) => (
             <button
-              key={item.label}
+              key={item.id ?? 'all'}
               onClick={() => setDivisiFilter(item.id)}
               className={`px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-bold border transition-all cursor-pointer ${
                 divisiFilter === item.id
@@ -194,15 +227,9 @@ export const JourneySection: React.FC<JourneySectionProps> = ({
         {/* Posisi Filter */}
         <div className="flex flex-wrap items-center gap-2 pt-2.5 border-t border-white/10">
           <span className="text-[10px] sm:text-[11px] font-mono-code text-[#E2C275] mr-1">POSISI:</span>
-          {[
-            { id: null, label: 'Semua' },
-            { id: 'staff', label: 'Staff' },
-            { id: 'koord', label: 'Koordinator' },
-            { id: 'wakil', label: 'Wakil Koordinator' },
-            { id: 'volunteer', label: 'Volunteer' }
-          ].map((item) => (
+          {positionFilterOptions.map((item) => (
             <button
-              key={item.label}
+              key={item.id ?? 'all'}
               onClick={() => setPosisiFilter(item.id)}
               className={`px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-bold border transition-all cursor-pointer ${
                 posisiFilter === item.id
@@ -214,26 +241,6 @@ export const JourneySection: React.FC<JourneySectionProps> = ({
             </button>
           ))}
         </div>
-
-        {/* Dynamic Extra Tags Filter (Jika admin menambahkan tag kustom baru) */}
-        {extraTags.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2 pt-2.5 border-t border-white/10">
-            <span className="text-[10px] sm:text-[11px] font-mono-code text-[#E2C275] mr-1">TAG LAIN:</span>
-            {extraTags.map((tag) => (
-              <button
-                key={tag}
-                onClick={() => setDivisiFilter(divisiFilter === tag ? null : tag)}
-                className={`px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-bold border transition-all cursor-pointer ${
-                  divisiFilter === tag
-                    ? 'bg-[#6B0F1A] text-[#F6DFB0] border-[#E2C275] shadow-lg scale-105'
-                    : 'bg-[#021238]/80 text-blue-100 border-[#C6A355]/45 hover:border-[#E2C275]'
-                }`}
-              >
-                #{tag.toUpperCase()}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* AUTHENTIC TREASURE MAP CANVAS (PETA HARTA KARUN BERLIKU) */}
