@@ -93,58 +93,128 @@ export const JourneySection: React.FC<JourneySectionProps> = ({
     return matchDivisi && matchPosisi;
   });
 
-  // Dynamic Division filters (DDM, Foto, Operator, plus any custom divisions present in database)
+  // Dynamic Division filters: only show divisions that are actually selected in admin / database
   const divisionFilterOptions = useMemo(() => {
     const list: Array<{ id: string | null; label: string }> = [
       { id: null, label: 'Semua' },
-      { id: 'ddm', label: 'DDM / Desain' },
-      { id: 'foto', label: 'Foto / Dokumentasi' },
-      { id: 'operator', label: 'Operator' },
     ];
-    const existingIds = new Set(['ddm', 'foto', 'operator']);
+    const existingIds = new Set<string>();
 
+    // Priority ordering for standard committee divisions if present
+    const priorityDivisions = [
+      'ddm',
+      'foto',
+      'operator',
+      'lapangan',
+      'korlap',
+      'acara',
+      'humas',
+      'logistik',
+      'konsumsi',
+      'sponsorship',
+      'keamanan',
+      'dekorasi',
+      'publikasi',
+    ];
+
+    // Collect all division tags present across all stops
+    const usedDivisions = new Set<string>();
     stops.forEach((s) => {
       (s.roleTags || []).forEach((t) => {
         const clean = t.toLowerCase().trim();
-        if (clean && !POSITION_KEYS.has(clean) && !existingIds.has(clean)) {
-          existingIds.add(clean);
-          list.push({
-            id: clean,
-            label: formatTagLabel(clean, 'divisi'),
-          });
+        if (clean && !POSITION_KEYS.has(clean)) {
+          usedDivisions.add(clean);
         }
       });
+    });
+
+    // 1. Add priority divisions first (if used in admin)
+    priorityDivisions.forEach((divId) => {
+      if (usedDivisions.has(divId) && !existingIds.has(divId)) {
+        existingIds.add(divId);
+        list.push({
+          id: divId,
+          label: formatTagLabel(divId, 'divisi'),
+        });
+      }
+    });
+
+    // 2. Add any other custom divisions that were chosen in admin
+    usedDivisions.forEach((divId) => {
+      if (!existingIds.has(divId)) {
+        existingIds.add(divId);
+        list.push({
+          id: divId,
+          label: formatTagLabel(divId, 'divisi'),
+        });
+      }
     });
 
     return list;
   }, [stops]);
 
-  // Dynamic Position filters (Staff, Koordinator, Wakil, etc. plus any custom positions present in database)
+  // Dynamic Position filters: only show positions that are actually selected in admin / database
   const positionFilterOptions = useMemo(() => {
     const list: Array<{ id: string | null; label: string }> = [
       { id: null, label: 'Semua' },
-      { id: 'staff', label: 'Staff' },
-      { id: 'koord', label: 'Koordinator' },
-      { id: 'wakil', label: 'Wakil Koordinator' },
-      { id: 'volunteer', label: 'Volunteer' },
     ];
-    const existingIds = new Set(['staff', 'koord', 'wakil', 'volunteer']);
+    const existingIds = new Set<string>();
 
+    const priorityPositions = [
+      'staff',
+      'koord',
+      'wakil',
+      'ketua',
+      'wakil_ketua',
+      'volunteer',
+      'bph',
+    ];
+
+    const usedPositions = new Set<string>();
     stops.forEach((s) => {
       (s.roleTags || []).forEach((t) => {
         const clean = t.toLowerCase().trim();
-        if (clean && POSITION_KEYS.has(clean) && !existingIds.has(clean)) {
-          existingIds.add(clean);
-          list.push({
-            id: clean,
-            label: formatTagLabel(clean, 'posisi'),
-          });
+        if (clean && POSITION_KEYS.has(clean)) {
+          usedPositions.add(clean);
         }
       });
     });
 
+    priorityPositions.forEach((posId) => {
+      if (usedPositions.has(posId) && !existingIds.has(posId)) {
+        existingIds.add(posId);
+        list.push({
+          id: posId,
+          label: formatTagLabel(posId, 'posisi'),
+        });
+      }
+    });
+
+    usedPositions.forEach((posId) => {
+      if (!existingIds.has(posId)) {
+        existingIds.add(posId);
+        list.push({
+          id: posId,
+          label: formatTagLabel(posId, 'posisi'),
+        });
+      }
+    });
+
     return list;
   }, [stops]);
+
+  // Reset filter if active filter tag is no longer present in stops
+  useEffect(() => {
+    if (divisiFilter && !divisionFilterOptions.some((d) => d.id === divisiFilter)) {
+      setDivisiFilter(null);
+    }
+  }, [divisionFilterOptions, divisiFilter]);
+
+  useEffect(() => {
+    if (posisiFilter && !positionFilterOptions.some((p) => p.id === posisiFilter)) {
+      setPosisiFilter(null);
+    }
+  }, [positionFilterOptions, posisiFilter]);
 
   const visibleMapStops = filteredMapStops;
 
