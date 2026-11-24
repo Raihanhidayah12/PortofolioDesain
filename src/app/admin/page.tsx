@@ -344,16 +344,33 @@ export default function AdminPage() {
   // --- CRUD: GALLERY ---
   const handleSaveWork = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingWork || !editingWork.id || !editingWork.title) {
-      showNotice('ID dan Judul wajib diisi', 'error');
+    if (!editingWork || !editingWork.title) {
+      showNotice('Judul wajib diisi', 'error');
       return;
     }
+
+    const payload = {
+      ...editingWork,
+      id: editingWork.id || `${editingWork.category === 'photography' ? 'photo' : 'work'}-${Date.now()}`,
+      category: editingWork.category || 'photography',
+      categoryLabel: editingWork.category === 'photography' ? 'Fotografi' : (editingWork.categoryLabel || 'Karya Desain'),
+      committee: editingWork.committee || (editingWork.category === 'photography' ? 'Fotografi' : ''),
+      dim: editingWork.dim || '3:2',
+      spanClass: editingWork.spanClass || 'md:col-span-6 lg:col-span-4',
+      aspectClass: editingWork.aspectClass || 'aspect-[3/2]',
+      tools: Array.isArray(editingWork.tools) ? editingWork.tools : [],
+      colors: Array.isArray(editingWork.colors) && editingWork.colors.length > 0
+        ? editingWork.colors
+        : ['#041A4D', '#E2C275', '#6B0F1A'],
+      art: editingWork.art || '',
+      desc: editingWork.desc || '',
+    };
 
     try {
       const res = await fetch('/api/gallery', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editingWork),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -785,7 +802,7 @@ export default function AdminPage() {
               },
               {
                 id: 'photography' as const,
-                label: 'Fotografi Acara',
+                label: 'Galeri Fotografi',
                 count: photographyWorks.length,
                 icon: (
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -894,7 +911,7 @@ export default function AdminPage() {
             {activeTab === 'journey' && 'Pos Ekspedisi'}
             {activeTab === 'certificates' && 'Sertifikat'}
             {activeTab === 'gallery' && 'Galeri Desain'}
-            {activeTab === 'photography' && 'Fotografi Acara'}
+            {activeTab === 'photography' && 'Galeri Fotografi'}
             {activeTab === 'inquiries' && 'Pesan Masuk'}
           </span>
         </div>
@@ -1540,11 +1557,11 @@ export default function AdminPage() {
                       ✦ PHOTOGRAPHY VAULT
                     </span>
                     <span className="text-xs font-mono-code text-blue-200/70">
-                      {photographyWorks.length} foto dokumentasi aktif
+                      {photographyWorks.length} foto aktif
                     </span>
                   </div>
                   <h2 className="font-display font-bold text-2xl text-white tracking-tight">
-                    Galeri Fotografi Acara
+                    Galeri Fotografi
                   </h2>
                 </div>
 
@@ -1553,7 +1570,7 @@ export default function AdminPage() {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Cari foto acara / kepanitiaan..."
+                    placeholder="Cari foto..."
                     className="w-48 sm:w-64 px-3.5 py-2 rounded-xl bg-[#010D2E] border border-[#C6A355]/50 text-white placeholder-blue-300/40 text-xs font-mono-code focus:outline-none focus:border-[#E2C275]"
                   />
 
@@ -1563,12 +1580,12 @@ export default function AdminPage() {
                         id: `photo-${Date.now()}`,
                         title: '',
                         category: 'photography',
-                        categoryLabel: 'Dokumentasi Fotografi',
+                        categoryLabel: 'Fotografi',
                         committee: '',
                         spanClass: 'md:col-span-6 lg:col-span-4',
                         aspectClass: 'aspect-[3/2]',
-                        dim: '3:2 • 24 MP',
-                        tools: ['Canon EOS', 'Adobe Lightroom'],
+                        dim: '3:2',
+                        tools: [],
                         colors: ['#041A4D', '#E2C275', '#6B0F1A'],
                         desc: '',
                         art: '',
@@ -1577,7 +1594,7 @@ export default function AdminPage() {
                     className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#6B0F1A] via-[#8A1422] to-[#6B0F1A] border border-[#E2C275] text-xs font-mono-code font-bold text-[#F6DFB0] shadow-md hover:brightness-110 cursor-pointer shrink-0 transition-all flex items-center gap-1.5"
                   >
                     <span>📸</span>
-                    <span>+ Tambah Foto Acara</span>
+                    <span>+ Upload Foto Baru</span>
                   </button>
                 </div>
               </div>
@@ -1589,11 +1606,11 @@ export default function AdminPage() {
                     📸
                   </div>
                   <h3 className="font-display font-bold text-lg text-white mb-1">
-                    Belum Ada Foto Dokumentasi Acara
+                    Belum Ada Foto di Galeri
                   </h3>
                   <p className="text-xs text-blue-200/70 max-w-md leading-relaxed mb-4">
-                    Foto yang ditambahkan di tab ini akan langsung ditampilkan pada bagian{' '}
-                    <strong className="text-[#E2C275]">Galeri Fotografi Acara</strong> di halaman utama portofolio.
+                    Foto yang di-upload di tab ini akan langsung ditampilkan pada bagian{' '}
+                    <strong className="text-[#E2C275]">Galeri Fotografi</strong> di halaman utama portofolio.
                   </p>
                   <button
                     onClick={() =>
@@ -1601,12 +1618,12 @@ export default function AdminPage() {
                         id: `photo-${Date.now()}`,
                         title: '',
                         category: 'photography',
-                        categoryLabel: 'Dokumentasi Fotografi',
+                        categoryLabel: 'Fotografi',
                         committee: '',
                         spanClass: 'md:col-span-6 lg:col-span-4',
                         aspectClass: 'aspect-[3/2]',
-                        dim: '3:2 • 24 MP',
-                        tools: ['Canon EOS', 'Adobe Lightroom'],
+                        dim: '3:2',
+                        tools: [],
                         colors: ['#041A4D', '#E2C275', '#6B0F1A'],
                         desc: '',
                         art: '',
@@ -1614,7 +1631,7 @@ export default function AdminPage() {
                     }
                     className="px-5 py-2.5 rounded-full bg-[#6B0F1A] hover:bg-[#8A1422] border border-[#E2C275] text-xs font-mono-code font-bold text-[#F6DFB0] shadow-lg transition-all cursor-pointer"
                   >
-                    + Upload Foto Dokumentasi Pertama
+                    + Upload Foto Pertama
                   </button>
                 </div>
               ) : (
@@ -2514,13 +2531,13 @@ export default function AdminPage() {
             <div className="shrink-0 flex items-center justify-between p-5 border-b border-[#C6A355]/40 bg-[#03174C]/95 relative z-10">
               <div>
                 <span className="text-[10px] font-mono-code text-[#E2C275] block font-bold">
-                  {editingWork.category === 'photography' ? '✦ PHOTOGRAPHY EDITOR ✦' : '✦ GALLERY EDITOR ✦'}
+                  {editingWork.category === 'photography' ? '✦ FOTOGRAFI ✦' : '✦ GALLERY EDITOR ✦'}
                 </span>
                 <h3 className="font-display font-bold text-lg text-white">
                   {editingWork.title
                     ? `Edit: ${editingWork.title}`
                     : editingWork.category === 'photography'
-                    ? 'Tambah Foto Dokumentasi Acara'
+                    ? 'Upload Foto Baru'
                     : 'Tambah Karya Galeri'}
                 </h3>
               </div>
@@ -2533,237 +2550,368 @@ export default function AdminPage() {
               </button>
             </div>
 
-            <form onSubmit={handleSaveWork} id="workForm" className="flex-1 overflow-y-auto p-5 space-y-3.5 text-xs relative z-10 no-scrollbar">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[#E2C275] font-mono-code font-bold mb-1">ID (SLUG)</label>
-                  <input
-                    type="text"
-                    required
-                    value={editingWork.id || ''}
-                    onChange={(e) => setEditingWork({ ...editingWork, id: e.target.value })}
-                    placeholder={editingWork.category === 'photography' ? 'photo-01' : 'w-01'}
-                    className="w-full px-3 py-2 rounded-xl bg-[#010D2E] border border-white/20 text-white font-mono-code"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[#E2C275] font-mono-code font-bold mb-1">KATEGORI</label>
-                  <select
-                    value={editingWork.category || 'poster'}
-                    onChange={(e) => {
-                      const cat = e.target.value;
-                      let label = 'Event Poster';
-                      if (cat === 'feed') label = 'Social Media Feed';
-                      if (cat === 'identity') label = 'Identity & Print';
-                      if (cat === 'photography') label = 'Dokumentasi Fotografi';
-                      setEditingWork({ ...editingWork, category: cat, categoryLabel: label });
-                    }}
-                    className="w-full px-3 py-2 rounded-xl bg-[#010D2E] border border-white/20 text-white"
-                  >
-                    <option value="photography">Dokumentasi Fotografi Acara</option>
-                    <option value="poster">Poster Event</option>
-                    <option value="feed">Social Media Feed (4:5)</option>
-                    <option value="identity">Identity &amp; Print</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[#E2C275] font-mono-code font-bold mb-1">
-                  {editingWork.category === 'photography' ? 'JUDUL FOTO / DOKUMENTASI' : 'JUDUL KARYA'}
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={editingWork.title || ''}
-                  onChange={(e) => setEditingWork({ ...editingWork, title: e.target.value })}
-                  placeholder={
-                    editingWork.category === 'photography'
-                      ? 'Sorotan Panggung Utama Malam Puncak...'
-                      : 'Judul karya...'
-                  }
-                  className="w-full px-3 py-2 rounded-xl bg-[#010D2E] border border-white/20 text-white text-sm"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[#E2C275] font-mono-code font-bold mb-1">
-                    {editingWork.category === 'photography' ? 'NAMA ACARA / KEPANITIAAN' : 'KEPANITIAAN / ACARA'}
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={editingWork.committee || ''}
-                    onChange={(e) => setEditingWork({ ...editingWork, committee: e.target.value })}
-                    placeholder="INNOFAIR 2024"
-                    className="w-full px-3 py-2 rounded-xl bg-[#010D2E] border border-white/20 text-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[#E2C275] font-mono-code font-bold mb-1">
-                    {editingWork.category === 'photography' ? 'RESOLUSI / DIMENSI' : 'DIMENSI UKURAN'}
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={editingWork.dim || ''}
-                    onChange={(e) => setEditingWork({ ...editingWork, dim: e.target.value })}
-                    placeholder={editingWork.category === 'photography' ? '3:2 • 24 MP' : '1080 × 1350 px'}
-                    className="w-full px-3 py-2 rounded-xl bg-[#010D2E] border border-white/20 text-white font-mono-code"
-                  />
-                </div>
-              </div>
-
-              {/* Aspect Ratio & Span Controls */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[#E2C275] font-mono-code font-bold mb-1">ASPEK RASIO KARTU</label>
-                  <select
-                    value={editingWork.aspectClass || 'aspect-[16/10]'}
-                    onChange={(e) => setEditingWork({ ...editingWork, aspectClass: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl bg-[#010D2E] border border-white/20 text-white text-xs font-mono-code"
-                  >
-                    <option value="aspect-[3/2]">Landscape Kamera 3:2</option>
-                    <option value="aspect-[16/9]">Landscape Lebar 16:9</option>
-                    <option value="aspect-[4/3]">Landscape Standar 4:3</option>
-                    <option value="aspect-[16/10]">Landscape 16:10</option>
-                    <option value="aspect-[4/5]">Feed Instagram 4:5</option>
-                    <option value="aspect-[9/16]">Poster / Banner 9:16</option>
-                    <option value="aspect-square">Square 1:1</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[#E2C275] font-mono-code font-bold mb-1">LEBAR GRID</label>
-                  <select
-                    value={editingWork.spanClass || 'md:col-span-6'}
-                    onChange={(e) => setEditingWork({ ...editingWork, spanClass: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl bg-[#010D2E] border border-white/20 text-white text-xs font-mono-code"
-                  >
-                    <option value="md:col-span-6 lg:col-span-4">Standar (4 Kolom / 3 per baris)</option>
-                    <option value="md:col-span-6">Sedang (6 Kolom / 2 per baris)</option>
-                    <option value="md:col-span-12">Lebar Penuh (12 Kolom / 1 per baris)</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Tools Input */}
-              <div>
-                <label className="block text-[#E2C275] font-mono-code font-bold mb-1">
-                  {editingWork.category === 'photography'
-                    ? 'KAMERA / LENSA / TOOLS (pisahkan dengan koma)'
-                    : 'TOOLS YANG DIGUNAKAN (pisahkan dengan koma)'}
-                </label>
-                <input
-                  type="text"
-                  value={editingWork.tools ? editingWork.tools.join(', ') : ''}
-                  onChange={(e) =>
-                    setEditingWork({
-                      ...editingWork,
-                      tools: e.target.value
-                        .split(',')
-                        .map((t) => t.trim())
-                        .filter(Boolean),
-                    })
-                  }
-                  placeholder={
-                    editingWork.category === 'photography'
-                      ? 'Canon EOS R6, 24-70mm f/2.8, Adobe Lightroom'
-                      : 'Figma, Lightroom, Photoshop'
-                  }
-                  className="w-full px-3 py-2 rounded-xl bg-[#010D2E] border border-white/20 text-white font-mono-code text-xs"
-                />
-              </div>
-
-              {/* Colors Palette Input */}
-              <div>
-                <label className="block text-[#E2C275] font-mono-code font-bold mb-1">
-                  PALET WARNA HEX (pisahkan dengan koma)
-                </label>
-                <input
-                  type="text"
-                  value={editingWork.colors ? editingWork.colors.join(', ') : ''}
-                  onChange={(e) =>
-                    setEditingWork({
-                      ...editingWork,
-                      colors: e.target.value
-                        .split(',')
-                        .map((c) => c.trim())
-                        .filter(Boolean),
-                    })
-                  }
-                  placeholder="#0038A8, #C6A355, #6B0F1A"
-                  className="w-full px-3 py-2 rounded-xl bg-[#010D2E] border border-white/20 text-white font-mono-code text-xs"
-                />
-                {editingWork.colors && editingWork.colors.length > 0 && (
-                  <div className="flex items-center gap-1.5 mt-2">
-                    {editingWork.colors.map((c) => (
-                      <span
-                        key={c}
-                        style={{ backgroundColor: c }}
-                        className="w-4 h-4 rounded-full border border-white/50"
-                        title={c}
-                      />
-                    ))}
+            {editingWork.category === 'photography' ? (
+              // ULTRA-CLEAN SIMPLIFIED PHOTOGRAPHY FORM
+              <form onSubmit={handleSaveWork} id="workForm" className="flex-1 overflow-y-auto p-5 space-y-4 text-xs relative z-10 no-scrollbar">
+                {/* 1. UPLOAD FOTO & PRATINJAU LANGSUNG */}
+                <div className="p-4 rounded-2xl bg-[#010D2E] border-2 border-dashed border-[#C6A355]/60 hover:border-[#E2C275] transition-all space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-[#E2C275] font-mono-code font-bold text-xs">
+                      ✦ FILE FOTO <span className="text-red-400">*</span>
+                    </label>
+                    <span className="text-[10px] font-mono-code text-blue-200/60">JPG, PNG, atau WebP</span>
                   </div>
-                )}
-              </div>
 
-              {/* Description Input */}
-              <div>
-                <label className="block text-[#E2C275] font-mono-code font-bold mb-1">
-                  {editingWork.category === 'photography'
-                    ? 'KETERANGAN / CERITA FOTO (OPSIONAL)'
-                    : 'DESKRIPSI KARYA (OPSIONAL)'}
-                </label>
-                <textarea
-                  rows={2}
-                  value={editingWork.desc || ''}
-                  onChange={(e) => setEditingWork({ ...editingWork, desc: e.target.value })}
-                  placeholder={
-                    editingWork.category === 'photography'
-                      ? 'Ceritakan sorotan panggung, pencahayaan, atau momen acara pada foto ini...'
-                      : 'Deskripsi konsep visual, tujuan desain, atau konteks acara...'
-                  }
-                  className="w-full px-3 py-2 rounded-xl bg-[#010D2E] border border-white/20 text-white text-xs leading-relaxed"
-                />
-              </div>
+                  {editingWork.art ? (
+                    <div className="relative rounded-xl overflow-hidden border border-[#E2C275]/50 group">
+                      <div className="aspect-[3/2] w-full max-h-56 bg-black/50">
+                        <ArtPreview type={editingWork.art} title={editingWork.title || 'Preview Foto'} />
+                      </div>
+                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                        <label className="px-3.5 py-1.5 rounded-xl bg-blue-700 hover:bg-blue-600 text-white font-mono-code font-bold cursor-pointer text-xs shadow-md">
+                          Ganti Foto
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) =>
+                              handleFileUpload(e, (url) => setEditingWork((prev) => (prev ? { ...prev, art: url } : null)))
+                            }
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setEditingWork({ ...editingWork, art: '' })}
+                          className="px-3 py-1.5 rounded-xl bg-red-800 hover:bg-red-700 text-white font-mono-code text-xs cursor-pointer"
+                        >
+                          Hapus
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center py-7 px-4 rounded-xl border border-white/10 bg-[#021238]/60 hover:bg-[#021238] cursor-pointer transition-all">
+                      <div className="w-12 h-12 rounded-2xl bg-[#6B0F1A] border border-[#E2C275] flex items-center justify-center text-xl text-[#E2C275] mb-2 shadow-md">
+                        📸
+                      </div>
+                      <span className="text-white font-bold text-xs">
+                        {uploading ? 'Sedang mengunggah foto...' : 'Klik di sini untuk upload foto'}
+                      </span>
+                      <span className="text-[10px] text-blue-200/60 mt-0.5">
+                        Foto otomatis tersimpan aman di database
+                      </span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) =>
+                          handleFileUpload(e, (url) => setEditingWork((prev) => (prev ? { ...prev, art: url } : null)))
+                        }
+                      />
+                    </label>
+                  )}
 
-              {/* Cover Art Upload Zone */}
-              <div className="p-3.5 rounded-2xl bg-[#010D2E] border border-[#C6A355]/30 space-y-2.5">
-                <label className="block text-[#E2C275] font-mono-code font-bold">
-                  {editingWork.category === 'photography'
-                    ? 'FILE FOTO DOKUMENTASI (JPG / PNG / WEBP)'
-                    : 'GAMBAR COVER / PREVIEW'}
-                </label>
-                <div className="flex gap-2 items-center">
                   <input
                     type="text"
                     value={editingWork.art || ''}
                     onChange={(e) => setEditingWork({ ...editingWork, art: e.target.value })}
-                    placeholder="URL gambar (/uploads/...)"
-                    className="flex-1 px-3 py-2 rounded-xl bg-[#021238] border border-white/20 text-white font-mono-code text-xs"
+                    placeholder="Atau tempel URL gambar (/uploads/...)"
+                    className="w-full px-3 py-1.5 rounded-lg bg-[#021238] border border-white/10 text-white font-mono-code text-[11px]"
                   />
-                  <label className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-900 to-blue-800 hover:from-blue-800 hover:to-blue-700 border border-blue-400 text-[#F6DFB0] cursor-pointer shrink-0 font-mono-code font-bold shadow">
-                    <span>{uploading ? '...' : 'Upload'}</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) =>
-                        handleFileUpload(e, (url) => setEditingWork((prev) => (prev ? { ...prev, art: url } : null)))
-                      }
-                    />
-                  </label>
                 </div>
 
-                {editingWork.art && (
-                  <div className="h-32 rounded-xl overflow-hidden border border-[#E2C275]/40 relative mt-2">
-                    <ArtPreview type={editingWork.art} title={editingWork.title} />
+                {/* 2. JUDUL FOTO */}
+                <div>
+                  <label className="block text-[#E2C275] font-mono-code font-bold mb-1">
+                    JUDUL FOTO <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editingWork.title || ''}
+                    onChange={(e) => setEditingWork({ ...editingWork, title: e.target.value })}
+                    placeholder="Misal: Sorotan Panggung Utama, Golden Hour di Pantai, Street Portrait..."
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#010D2E] border border-white/20 text-white text-sm focus:border-[#E2C275] focus:outline-none"
+                  />
+                </div>
+
+                {/* 3. LOKASI / ACARA / SERI & KAMERA (OPSIONAL) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[#E2C275] font-mono-code font-bold mb-1">
+                      LOKASI / ACARA / KATEGORI (OPSIONAL)
+                    </label>
+                    <input
+                      type="text"
+                      value={editingWork.committee || ''}
+                      onChange={(e) => setEditingWork({ ...editingWork, committee: e.target.value })}
+                      placeholder="Misal: Malang, Techfair, Portrait, Street..."
+                      className="w-full px-3 py-2 rounded-xl bg-[#010D2E] border border-white/20 text-white placeholder-blue-300/30 text-xs"
+                    />
+                    <span className="text-[9px] text-blue-200/50 mt-0.5 block">Boleh dikosongkan jika bukan kepanitiaan</span>
                   </div>
-                )}
-              </div>
-            </form>
+
+                  <div>
+                    <label className="block text-[#E2C275] font-mono-code font-bold mb-1">
+                      KAMERA / GEAR (OPSIONAL)
+                    </label>
+                    <input
+                      type="text"
+                      value={editingWork.tools ? editingWork.tools.join(', ') : ''}
+                      onChange={(e) =>
+                        setEditingWork({
+                          ...editingWork,
+                          tools: e.target.value
+                            .split(',')
+                            .map((t) => t.trim())
+                            .filter(Boolean),
+                        })
+                      }
+                      placeholder="Misal: Canon EOS, Sony A7, iPhone..."
+                      className="w-full px-3 py-2 rounded-xl bg-[#010D2E] border border-white/20 text-white placeholder-blue-300/30 font-mono-code text-[11px]"
+                    />
+                    <span className="text-[9px] text-blue-200/50 mt-0.5 block">Pisahkan dengan koma jika lebih dari satu</span>
+                  </div>
+                </div>
+
+                {/* 4. CERITA / KETERANGAN SINGKAT */}
+                <div>
+                  <label className="block text-[#E2C275] font-mono-code font-bold mb-1">
+                    CERITA / KETERANGAN SINGKAT (OPSIONAL)
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={editingWork.desc || ''}
+                    onChange={(e) => setEditingWork({ ...editingWork, desc: e.target.value })}
+                    placeholder="Ceritakan momen, pencahayaan, atau suasana di balik foto ini..."
+                    className="w-full px-3 py-2 rounded-xl bg-[#010D2E] border border-white/20 text-white text-xs leading-relaxed placeholder-blue-300/30"
+                  />
+                </div>
+
+                {/* COLLAPSIBLE ADVANCED SETTINGS */}
+                <details className="rounded-xl bg-[#010D2E]/60 border border-white/10 p-3 text-[11px]">
+                  <summary className="cursor-pointer text-[#E2C275] font-mono-code font-bold select-none hover:text-white transition-colors">
+                    ⚙️ Pengaturan Lanjutan (Ukuran Kartu &amp; Grid)
+                  </summary>
+                  <div className="mt-3 space-y-3 pt-2.5 border-t border-white/10">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-blue-200/80 font-mono-code mb-1">ASPEK RASIO KARTU</label>
+                        <select
+                          value={editingWork.aspectClass || 'aspect-[3/2]'}
+                          onChange={(e) => setEditingWork({ ...editingWork, aspectClass: e.target.value })}
+                          className="w-full px-2.5 py-1.5 rounded-lg bg-[#021238] border border-white/20 text-white text-[11px]"
+                        >
+                          <option value="aspect-[3/2]">Landscape Kamera 3:2 (Default)</option>
+                          <option value="aspect-[16/9]">Landscape Lebar 16:9</option>
+                          <option value="aspect-[4/3]">Standar 4:3</option>
+                          <option value="aspect-[4/5]">Portrait / Feed 4:5</option>
+                          <option value="aspect-square">Square 1:1</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-blue-200/80 font-mono-code mb-1">LEBAR GRID</label>
+                        <select
+                          value={editingWork.spanClass || 'md:col-span-6 lg:col-span-4'}
+                          onChange={(e) => setEditingWork({ ...editingWork, spanClass: e.target.value })}
+                          className="w-full px-2.5 py-1.5 rounded-lg bg-[#021238] border border-white/20 text-white text-[11px]"
+                        >
+                          <option value="md:col-span-6 lg:col-span-4">Standar (3 per baris)</option>
+                          <option value="md:col-span-6">Sedang (2 per baris)</option>
+                          <option value="md:col-span-12">Lebar Penuh (1 per baris)</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </details>
+              </form>
+            ) : (
+              // FORM UNTUK KARYA DESAIN GRAFIS
+              <form onSubmit={handleSaveWork} id="workForm" className="flex-1 overflow-y-auto p-5 space-y-3.5 text-xs relative z-10 no-scrollbar">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[#E2C275] font-mono-code font-bold mb-1">ID (SLUG)</label>
+                    <input
+                      type="text"
+                      required
+                      value={editingWork.id || ''}
+                      onChange={(e) => setEditingWork({ ...editingWork, id: e.target.value })}
+                      placeholder="w-01"
+                      className="w-full px-3 py-2 rounded-xl bg-[#010D2E] border border-white/20 text-white font-mono-code"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[#E2C275] font-mono-code font-bold mb-1">KATEGORI</label>
+                    <select
+                      value={editingWork.category || 'poster'}
+                      onChange={(e) => {
+                        const cat = e.target.value;
+                        let label = 'Event Poster';
+                        if (cat === 'feed') label = 'Social Media Feed';
+                        if (cat === 'identity') label = 'Identity & Print';
+                        setEditingWork({ ...editingWork, category: cat, categoryLabel: label });
+                      }}
+                      className="w-full px-3 py-2 rounded-xl bg-[#010D2E] border border-white/20 text-white"
+                    >
+                      <option value="poster">Poster Event</option>
+                      <option value="feed">Social Media Feed (4:5)</option>
+                      <option value="identity">Identity &amp; Print</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[#E2C275] font-mono-code font-bold mb-1">JUDUL KARYA</label>
+                  <input
+                    type="text"
+                    required
+                    value={editingWork.title || ''}
+                    onChange={(e) => setEditingWork({ ...editingWork, title: e.target.value })}
+                    placeholder="Judul karya..."
+                    className="w-full px-3 py-2 rounded-xl bg-[#010D2E] border border-white/20 text-white text-sm"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[#E2C275] font-mono-code font-bold mb-1">KEPANITIAAN / ACARA</label>
+                    <input
+                      type="text"
+                      required
+                      value={editingWork.committee || ''}
+                      onChange={(e) => setEditingWork({ ...editingWork, committee: e.target.value })}
+                      placeholder="INNOFAIR 2024"
+                      className="w-full px-3 py-2 rounded-xl bg-[#010D2E] border border-white/20 text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[#E2C275] font-mono-code font-bold mb-1">DIMENSI UKURAN</label>
+                    <input
+                      type="text"
+                      required
+                      value={editingWork.dim || ''}
+                      onChange={(e) => setEditingWork({ ...editingWork, dim: e.target.value })}
+                      placeholder="1080 × 1350 px"
+                      className="w-full px-3 py-2 rounded-xl bg-[#010D2E] border border-white/20 text-white font-mono-code"
+                    />
+                  </div>
+                </div>
+
+                {/* Aspect Ratio & Span Controls */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[#E2C275] font-mono-code font-bold mb-1">ASPEK RASIO KARTU</label>
+                    <select
+                      value={editingWork.aspectClass || 'aspect-[16/10]'}
+                      onChange={(e) => setEditingWork({ ...editingWork, aspectClass: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl bg-[#010D2E] border border-white/20 text-white text-xs font-mono-code"
+                    >
+                      <option value="aspect-[3/2]">Landscape Kamera 3:2</option>
+                      <option value="aspect-[16/9]">Landscape Lebar 16:9</option>
+                      <option value="aspect-[4/3]">Landscape Standar 4:3</option>
+                      <option value="aspect-[16/10]">Landscape 16:10</option>
+                      <option value="aspect-[4/5]">Feed Instagram 4:5</option>
+                      <option value="aspect-[9/16]">Poster / Banner 9:16</option>
+                      <option value="aspect-square">Square 1:1</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[#E2C275] font-mono-code font-bold mb-1">LEBAR GRID</label>
+                    <select
+                      value={editingWork.spanClass || 'md:col-span-6'}
+                      onChange={(e) => setEditingWork({ ...editingWork, spanClass: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl bg-[#010D2E] border border-white/20 text-white text-xs font-mono-code"
+                    >
+                      <option value="md:col-span-6 lg:col-span-4">Standar (4 Kolom / 3 per baris)</option>
+                      <option value="md:col-span-6">Sedang (6 Kolom / 2 per baris)</option>
+                      <option value="md:col-span-12">Lebar Penuh (12 Kolom / 1 per baris)</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Tools Input */}
+                <div>
+                  <label className="block text-[#E2C275] font-mono-code font-bold mb-1">TOOLS YANG DIGUNAKAN</label>
+                  <input
+                    type="text"
+                    value={editingWork.tools ? editingWork.tools.join(', ') : ''}
+                    onChange={(e) =>
+                      setEditingWork({
+                        ...editingWork,
+                        tools: e.target.value
+                          .split(',')
+                          .map((t) => t.trim())
+                          .filter(Boolean),
+                      })
+                    }
+                    placeholder="Figma, Lightroom, Photoshop"
+                    className="w-full px-3 py-2 rounded-xl bg-[#010D2E] border border-white/20 text-white font-mono-code text-xs"
+                  />
+                </div>
+
+                {/* Colors Palette Input */}
+                <div>
+                  <label className="block text-[#E2C275] font-mono-code font-bold mb-1">PALET WARNA HEX</label>
+                  <input
+                    type="text"
+                    value={editingWork.colors ? editingWork.colors.join(', ') : ''}
+                    onChange={(e) =>
+                      setEditingWork({
+                        ...editingWork,
+                        colors: e.target.value
+                          .split(',')
+                          .map((c) => c.trim())
+                          .filter(Boolean),
+                      })
+                    }
+                    placeholder="#0038A8, #C6A355, #6B0F1A"
+                    className="w-full px-3 py-2 rounded-xl bg-[#010D2E] border border-white/20 text-white font-mono-code text-xs"
+                  />
+                </div>
+
+                {/* Description Input */}
+                <div>
+                  <label className="block text-[#E2C275] font-mono-code font-bold mb-1">DESKRIPSI KARYA (OPSIONAL)</label>
+                  <textarea
+                    rows={2}
+                    value={editingWork.desc || ''}
+                    onChange={(e) => setEditingWork({ ...editingWork, desc: e.target.value })}
+                    placeholder="Deskripsi konsep visual, tujuan desain, atau konteks acara..."
+                    className="w-full px-3 py-2 rounded-xl bg-[#010D2E] border border-white/20 text-white text-xs leading-relaxed"
+                  />
+                </div>
+
+                {/* Cover Art Upload Zone */}
+                <div className="p-3.5 rounded-2xl bg-[#010D2E] border border-[#C6A355]/30 space-y-2.5">
+                  <label className="block text-[#E2C275] font-mono-code font-bold">GAMBAR COVER / PREVIEW</label>
+                  <div className="flex gap-2 items-center">
+                    <input
+                      type="text"
+                      value={editingWork.art || ''}
+                      onChange={(e) => setEditingWork({ ...editingWork, art: e.target.value })}
+                      placeholder="URL gambar (/uploads/...)"
+                      className="flex-1 px-3 py-2 rounded-xl bg-[#021238] border border-white/20 text-white font-mono-code text-xs"
+                    />
+                    <label className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-900 to-blue-800 hover:from-blue-800 hover:to-blue-700 border border-blue-400 text-[#F6DFB0] cursor-pointer shrink-0 font-mono-code font-bold shadow">
+                      <span>{uploading ? '...' : 'Upload'}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) =>
+                          handleFileUpload(e, (url) => setEditingWork((prev) => (prev ? { ...prev, art: url } : null)))
+                        }
+                      />
+                    </label>
+                  </div>
+
+                  {editingWork.art && (
+                    <div className="h-32 rounded-xl overflow-hidden border border-[#E2C275]/40 relative mt-2">
+                      <ArtPreview type={editingWork.art} title={editingWork.title} />
+                    </div>
+                  )}
+                </div>
+              </form>
+            )}
 
             <div className="shrink-0 flex items-center justify-end gap-2.5 p-4 border-t border-[#C6A355]/40 bg-[#03174C]/95 relative z-10">
               <button

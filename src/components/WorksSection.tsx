@@ -175,12 +175,12 @@ export const PhotographyGallerySection: React.FC<WorksSectionProps> = ({
             <span>✦ PHOTOGRAPHY VAULT ✦</span>
           </span>
           <h2 className="font-display font-bold text-3xl sm:text-5xl md:text-6xl text-white leading-[0.95] tracking-tight drop-shadow-[0_6px_16px_rgba(0,0,0,0.5)]">
-            Galeri <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E2C275] via-[#F6DFB0] to-[#E2C275]">Fotografi Acara</span>
+            Galeri <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E2C275] via-[#F6DFB0] to-[#E2C275]">Fotografi</span>
           </h2>
         </div>
 
         <p className="text-xs sm:text-sm text-blue-100/85 max-w-md leading-relaxed">
-          Dokumentasi panggung utama, sorotan tata cahaya dinamis, dan potret candid manusia sepanjang perjalanan kepanitiaan.
+          Koleksi tangkapan visual, potret momen berkesan, dan dokumentasi fotografi sepanjang perjalanan karya.
         </p>
       </div>
 
@@ -188,10 +188,10 @@ export const PhotographyGallerySection: React.FC<WorksSectionProps> = ({
       {photoWorks.length === 0 ? (
         <div className="relative z-10 py-14 px-4 text-center rounded-[24px] bg-[#021238]/70 border border-[#C6A355]/40 flex flex-col items-center justify-center">
           <p className="text-base font-display font-bold text-[#F6DFB0] mb-1.5">
-            Belum Ada Dokumentasi Foto Ditampilkan
+            Belum Ada Foto Ditampilkan
           </p>
           <span className="text-xs text-blue-200/70">
-            Arsip fotografi panggung dan momen acara akan segera diperbarui.
+            Koleksi fotografi akan segera diunggah melalui halaman admin.
           </span>
         </div>
       ) : (
@@ -202,8 +202,8 @@ export const PhotographyGallerySection: React.FC<WorksSectionProps> = ({
               onClick={() =>
                 onOpenLightbox({
                   title: work.title,
-                  subtitle: `${work.categoryLabel} • ${work.committee}`,
-                  meta: `${work.dim} • ${work.tools.join(', ')}`,
+                  subtitle: `${work.committee || 'Fotografi'}${work.dim ? ` • ${work.dim}` : ''}`,
+                  meta: (work.tools || []).join(', '),
                   desc: work.desc,
                   art: work.art,
                   imageUrl: work.art,
@@ -219,9 +219,11 @@ export const PhotographyGallerySection: React.FC<WorksSectionProps> = ({
                   <div className="w-full h-full transition-transform duration-500 group-hover:scale-105">
                     <ArtPreview type={work.art} title={work.title} meta={work.dim} />
                   </div>
-                  <span className="absolute top-3 left-3 sm:top-3.5 sm:left-3.5 px-2.5 sm:px-3 py-1 rounded-full bg-[#021238]/90 backdrop-blur-sm border border-[#C6A355] text-[9px] sm:text-[10px] font-mono-code text-[#F6DFB0]">
-                    {work.committee}
-                  </span>
+                  {work.committee && (
+                    <span className="absolute top-3 left-3 sm:top-3.5 sm:left-3.5 px-2.5 sm:px-3 py-1 rounded-full bg-[#021238]/90 backdrop-blur-sm border border-[#C6A355] text-[9px] sm:text-[10px] font-mono-code text-[#F6DFB0]">
+                      {work.committee}
+                    </span>
+                  )}
                   <span className="absolute top-3 right-3 sm:top-3.5 sm:right-3.5 p-1.5 sm:p-2 rounded-full bg-[#021238]/90 border border-[#C6A355] text-[#E2C275] opacity-0 group-hover:opacity-100 transition-opacity">
                     <IconMaximize2 className="w-3.5 h-3.5" />
                   </span>
@@ -229,9 +231,8 @@ export const PhotographyGallerySection: React.FC<WorksSectionProps> = ({
 
                 <div className="p-4 sm:p-6">
                   <span className="text-[10px] sm:text-[11px] font-mono-code text-[#E2C275] flex items-center gap-1.5">
-                    <span>📸 {work.categoryLabel}</span>
-                    <span>&bull;</span>
-                    <span>{work.dim}</span>
+                    <span>📸 {work.committee || 'Fotografi'}</span>
+                    {work.dim && <span>&bull; {work.dim}</span>}
                   </span>
                   <h3 className="font-display font-bold text-lg sm:text-xl text-white group-hover:text-[#E2C275] transition-colors mt-1 line-clamp-1">
                     {work.title}
@@ -244,25 +245,29 @@ export const PhotographyGallerySection: React.FC<WorksSectionProps> = ({
                 </div>
               </div>
 
-              <div className="px-4 sm:px-6 py-3 bg-[#020F2B]/90 border-t border-[#C6A355]/30 flex flex-wrap items-center justify-between gap-2">
-                <span className="text-[10px] font-mono-code text-blue-200/80 truncate max-w-[200px] sm:max-w-none">
-                  {work.tools.join(' • ')}
-                </span>
-                <div
-                  className="flex items-center gap-1.5 shrink-0"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {work.colors.map((hex) => (
-                    <button
-                      key={hex}
-                      onClick={() => onCopyHex(hex)}
-                      title={`Salin kode warna ${hex}`}
-                      className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full border border-white/50 cursor-pointer hover:scale-125 transition-transform"
-                      style={{ backgroundColor: hex }}
-                    />
-                  ))}
+              {((work.tools && work.tools.length > 0) || (work.colors && work.colors.length > 0)) && (
+                <div className="px-4 sm:px-6 py-3 bg-[#020F2B]/90 border-t border-[#C6A355]/30 flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-[10px] font-mono-code text-blue-200/80 truncate max-w-[200px] sm:max-w-none">
+                    {(work.tools || []).join(' • ')}
+                  </span>
+                  {work.colors && work.colors.length > 0 && (
+                    <div
+                      className="flex items-center gap-1.5 shrink-0"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {work.colors.map((hex) => (
+                        <button
+                          key={hex}
+                          onClick={() => onCopyHex(hex)}
+                          title={`Salin kode warna ${hex}`}
+                          className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full border border-white/50 cursor-pointer hover:scale-125 transition-transform"
+                          style={{ backgroundColor: hex }}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
-              </div>
+              )}
             </div>
           ))}
         </div>
