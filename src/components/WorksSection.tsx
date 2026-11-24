@@ -183,6 +183,9 @@ export const PhotographyGallerySection: React.FC<WorksSectionProps> = ({
   const photoWorks = works.filter((item) => item.category === 'photography');
   const sortedPhotoWorks = [...photoWorks].sort(sortByYearDesc);
 
+  const isTwoCards = sortedPhotoWorks.length === 2;
+  const isOneCard = sortedPhotoWorks.length === 1;
+
   return (
     <section
       id="photography-gallery"
@@ -202,12 +205,19 @@ export const PhotographyGallerySection: React.FC<WorksSectionProps> = ({
           </h2>
         </div>
 
-        <p className="text-xs sm:text-sm text-blue-100/85 max-w-md leading-relaxed">
-          Koleksi tangkapan visual, potret momen berkesan, dan dokumentasi fotografi sepanjang perjalanan karya.
-        </p>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <p className="text-xs sm:text-sm text-blue-100/85 max-w-md leading-relaxed">
+            Koleksi tangkapan visual dan dokumentasi momen berkesan sepanjang perjalanan karya.
+          </p>
+          {sortedPhotoWorks.length > 0 && (
+            <span className="self-start sm:self-auto px-3 py-1 rounded-full bg-[#03184A] border border-[#C6A355]/60 text-[#E2C275] font-mono-code text-[11px] font-bold shrink-0">
+              {sortedPhotoWorks.length} Foto
+            </span>
+          )}
+        </div>
       </div>
 
-      {/* Photography Works Grid */}
+      {/* Photography Works Showcase */}
       {sortedPhotoWorks.length === 0 ? (
         <div className="relative z-10 py-14 px-4 text-center rounded-[24px] bg-[#021238]/70 border border-[#C6A355]/40 flex flex-col items-center justify-center">
           <p className="text-base font-display font-bold text-[#F6DFB0] mb-1.5">
@@ -218,81 +228,109 @@ export const PhotographyGallerySection: React.FC<WorksSectionProps> = ({
           </span>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6 relative z-10">
-          {sortedPhotoWorks.map((work) => (
-            <div
-              key={work.id}
-              onClick={() =>
-                onOpenLightbox({
-                  title: work.title,
-                  subtitle: `${work.committee || 'Fotografi'}${work.dim ? ` • ${work.dim}` : ''}`,
-                  meta: (work.tools || []).join(', '),
-                  desc: work.desc,
-                  art: work.art,
-                  imageUrl: work.art,
-                  colors: work.colors
-                })
-              }
-              className={`${work.spanClass} group rounded-[24px] sm:rounded-[32px] bg-gradient-to-br from-[#062464]/95 via-[#03184A]/95 to-[#010E2E]/98 border-2 border-[#C6A355]/75 hover:border-[#E2C275] overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 hover:-translate-y-2 shadow-[0_16px_45px_rgba(0,0,0,0.6)] hover:shadow-[0_20px_50px_rgba(226,194,117,0.22)]`}
-            >
-              <div>
-                <div
-                  className={`${work.aspectClass} max-h-[340px] sm:max-h-[380px] w-full relative overflow-hidden border-b border-[#C6A355]/40`}
-                >
-                  <div className="w-full h-full transition-transform duration-500 group-hover:scale-105">
-                    <ArtPreview type={work.art} title={work.title} meta={work.dim} />
-                  </div>
-                  {work.committee && (
-                    <span className="absolute top-3 left-3 sm:top-3.5 sm:left-3.5 px-2.5 sm:px-3 py-1 rounded-full bg-[#021238]/90 backdrop-blur-sm border border-[#C6A355] text-[9px] sm:text-[10px] font-mono-code text-[#F6DFB0]">
-                      {work.committee}
-                    </span>
-                  )}
-                  <span className="absolute top-3 right-3 sm:top-3.5 sm:right-3.5 p-1.5 sm:p-2 rounded-full bg-[#021238]/90 border border-[#C6A355] text-[#E2C275] opacity-0 group-hover:opacity-100 transition-opacity">
-                    <IconMaximize2 className="w-3.5 h-3.5" />
-                  </span>
-                </div>
+        <div
+          className={
+            isOneCard
+              ? 'max-w-3xl mx-auto relative z-10'
+              : isTwoCards
+              ? 'grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 relative z-10'
+              : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-7 relative z-10'
+          }
+        >
+          {sortedPhotoWorks.map((work) => {
+            const gear = (work.tools || []).filter(Boolean).join(' • ');
 
-                <div className="p-4 sm:p-6">
-                  <span className="text-[10px] sm:text-[11px] font-mono-code text-[#E2C275] flex items-center gap-1.5">
-                    <span>📸 {work.committee || 'Fotografi'}</span>
-                    {work.dim && <span>&bull; {work.dim}</span>}
-                  </span>
-                  <h3 className="font-display font-bold text-lg sm:text-xl text-white group-hover:text-[#E2C275] transition-colors mt-1 line-clamp-1">
-                    {work.title}
-                  </h3>
-                  {work.desc && (
-                    <p className="text-xs sm:text-sm text-blue-100/85 mt-1.5 sm:mt-2 leading-relaxed line-clamp-2">
-                      {work.desc}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {((work.tools && work.tools.length > 0) || (work.colors && work.colors.length > 0)) && (
-                <div className="px-4 sm:px-6 py-3 bg-[#020F2B]/90 border-t border-[#C6A355]/30 flex flex-wrap items-center justify-between gap-2">
-                  <span className="text-[10px] font-mono-code text-blue-200/80 truncate max-w-[200px] sm:max-w-none">
-                    {(work.tools || []).join(' • ')}
-                  </span>
-                  {work.colors && work.colors.length > 0 && (
-                    <div
-                      className="flex items-center gap-1.5 shrink-0"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {work.colors.map((hex) => (
-                        <button
-                          key={hex}
-                          onClick={() => onCopyHex(hex)}
-                          title={`Salin kode warna ${hex}`}
-                          className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full border border-white/50 cursor-pointer hover:scale-125 transition-transform"
-                          style={{ backgroundColor: hex }}
-                        />
-                      ))}
+            return (
+              <div
+                key={work.id}
+                onClick={() =>
+                  onOpenLightbox({
+                    title: work.title,
+                    subtitle: `${work.committee || 'Fotografi'}${work.year ? ` • ${work.year}` : ''}`,
+                    meta: gear || work.dim,
+                    desc: work.desc,
+                    art: work.art,
+                    imageUrl: work.art,
+                    colors: work.colors,
+                  })
+                }
+                className="group relative rounded-[28px] sm:rounded-[36px] overflow-hidden border-2 border-[#C6A355]/70 hover:border-[#E2C275] bg-[#020F2B] cursor-pointer transition-all duration-500 hover:-translate-y-2.5 shadow-[0_18px_50px_rgba(0,0,0,0.7)] hover:shadow-[0_26px_70px_rgba(226,194,117,0.32)] h-[460px] sm:h-[520px] md:h-[560px] flex flex-col justify-between"
+              >
+                {/* 1. FULL BLEED PHOTO (HERO VISUAL) */}
+                <div className="absolute inset-0 w-full h-full overflow-hidden">
+                  {work.art &&
+                  (work.art.startsWith('/') ||
+                    work.art.startsWith('http') ||
+                    work.art.match(/\.(png|jpe?g|webp|gif)/i)) ? (
+                    <img
+                      src={work.art}
+                      alt={work.title}
+                      loading="lazy"
+                      decoding="async"
+                      className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-108"
+                    />
+                  ) : (
+                    <div className="w-full h-full transition-transform duration-700 ease-out group-hover:scale-108">
+                      <ArtPreview type={work.art} title={work.title} />
                     </div>
                   )}
+                  {/* Subtle top & edge vignette */}
+                  <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-transparent pointer-events-none" />
                 </div>
-              )}
-            </div>
-          ))}
+
+                {/* 2. TOP FLOATING BADGES */}
+                <div className="relative z-10 p-4 sm:p-5 flex items-center justify-between pointer-events-none">
+                  {work.committee ? (
+                    <span className="px-3.5 py-1.5 rounded-full bg-black/65 backdrop-blur-md border border-[#E2C275]/60 text-[10px] sm:text-[11px] font-mono-code text-[#F6DFB0] flex items-center gap-1.5 shadow-lg">
+                      <span>📍</span>
+                      <span className="truncate max-w-[200px] sm:max-w-[260px] font-semibold">
+                        {work.committee}
+                      </span>
+                    </span>
+                  ) : work.year ? (
+                    <span className="px-3.5 py-1.5 rounded-full bg-black/65 backdrop-blur-md border border-[#E2C275]/60 text-[10px] sm:text-[11px] font-mono-code text-[#F6DFB0] shadow-lg font-bold">
+                      ✦ {work.year}
+                    </span>
+                  ) : (
+                    <div />
+                  )}
+
+                  <span className="p-2 sm:p-2.5 rounded-full bg-black/65 backdrop-blur-md border border-[#E2C275]/60 text-[#E2C275] group-hover:bg-[#6B0F1A] group-hover:border-[#E2C275] transition-all duration-300 shadow-lg group-hover:scale-110 flex items-center justify-center">
+                    <IconMaximize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  </span>
+                </div>
+
+                {/* 3. BOTTOM CINEMATIC GRADIENT OVERLAY (Minimalist & Focused) */}
+                <div className="relative z-10 p-5 sm:p-7 pt-24 bg-gradient-to-t from-black/95 via-black/65 to-transparent">
+                  {/* Year & Gear Micro-Badges */}
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
+                    {work.year && (
+                      <span className="px-2.5 py-0.5 rounded-md bg-[#6B0F1A]/95 border border-[#E2C275]/70 text-[9px] sm:text-[10px] font-mono-code text-[#F6DFB0] font-bold shadow-sm">
+                        ✦ {work.year}
+                      </span>
+                    )}
+                    {gear && (
+                      <span className="text-[10px] sm:text-[11px] font-mono-code text-blue-200/90 flex items-center gap-1 truncate max-w-[280px]">
+                        <span>📷</span>
+                        <span className="truncate">{gear}</span>
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Title */}
+                  <h3 className="font-display font-bold text-xl sm:text-2xl md:text-[26px] text-white group-hover:text-[#E2C275] transition-colors leading-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)] line-clamp-2">
+                    {work.title}
+                  </h3>
+
+                  {/* Interactive CTA Reveal on Hover */}
+                  <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-mono-code text-[#E2C275] opacity-80 group-hover:opacity-100 transition-all duration-300 mt-2.5">
+                    <span className="font-semibold">Lihat Foto Resolusi Penuh</span>
+                    <span className="group-hover:translate-x-1 transition-transform">↗</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </section>
