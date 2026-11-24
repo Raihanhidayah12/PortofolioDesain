@@ -196,65 +196,6 @@ const SPAN_CLASSES: Record<string, string> = {
   'md:col-span-12': 'md:col-span-12',
 };
 
-// Numeric aspect ratio resolver for true Justified Mosaic Layout (Matching Gambar Kedua)
-const getAspectRatioNumber = (aspectClass?: string): number => {
-  if (!aspectClass) return 1.5;
-  if (aspectClass === 'aspect-square' || aspectClass === 'aspect-[1/1]') return 1.0;
-  if (aspectClass === 'aspect-video' || aspectClass === 'aspect-[16/9]') return 16 / 9; // ~1.78
-  if (aspectClass === 'aspect-[16/10]') return 1.6;
-  if (aspectClass === 'aspect-[3/2]') return 1.5;
-  if (aspectClass === 'aspect-[4/3]') return 4 / 3; // ~1.333
-  if (aspectClass === 'aspect-[4/5]') return 0.8;
-  if (aspectClass === 'aspect-[3/4]') return 0.75;
-  if (aspectClass === 'aspect-[2/3]') return 2 / 3; // ~0.667
-  if (aspectClass === 'aspect-[9/16]') return 9 / 16; // ~0.5625
-  const match = aspectClass.match(/aspect-\[(\d+)\/(\d+)\]/);
-  if (match) {
-    const w = parseFloat(match[1]);
-    const h = parseFloat(match[2]);
-    if (h > 0) return w / h;
-  }
-  return 1.5;
-};
-
-// Partitions photos into flush, justified horizontal rows (just like Google Photos & Gambar Kedua)
-const groupPhotosIntoJustifiedRows = (
-  photos: GalleryWork[],
-  targetSumRatio = 3.5
-): GalleryWork[][] => {
-  if (photos.length <= 3) {
-    return [photos];
-  }
-
-  const rows: GalleryWork[][] = [];
-  let currentRow: GalleryWork[] = [];
-  let currentSum = 0;
-
-  for (let i = 0; i < photos.length; i++) {
-    const p = photos[i];
-    const r = getAspectRatioNumber(p.aspectClass);
-    currentRow.push(p);
-    currentSum += r;
-
-    const remaining = photos.length - 1 - i;
-    if (currentSum >= targetSumRatio && remaining >= 2) {
-      rows.push(currentRow);
-      currentRow = [];
-      currentSum = 0;
-    }
-  }
-
-  if (currentRow.length > 0) {
-    if (currentRow.length === 1 && rows.length > 0 && rows[rows.length - 1].length >= 3) {
-      const popped = rows[rows.length - 1].pop();
-      if (popped) currentRow.unshift(popped);
-    }
-    rows.push(currentRow);
-  }
-
-  return rows;
-};
-
 export const PhotographyGallerySection: React.FC<WorksSectionProps> = ({
   onOpenLightbox,
   onCopyHex,
@@ -262,7 +203,6 @@ export const PhotographyGallerySection: React.FC<WorksSectionProps> = ({
 }) => {
   const photoWorks = works.filter((item) => item.category === 'photography');
   const sortedPhotoWorks = [...photoWorks].sort(sortByYearDesc);
-  const photoRows = groupPhotosIntoJustifiedRows(sortedPhotoWorks);
 
   return (
     <section
@@ -289,7 +229,7 @@ export const PhotographyGallerySection: React.FC<WorksSectionProps> = ({
         </p>
       </div>
 
-      {/* Photography Works Showcase - Justified Rows Mosaic (Matching Gambar Kedua) */}
+      {/* Photography Works Showcase - Editorial Masonry Grid (Matching Gambar Kedua 100%) */}
       {sortedPhotoWorks.length === 0 ? (
         <div className="relative z-10 py-14 px-4 text-center rounded-[24px] bg-[#021238]/70 border border-[#C6A355]/40 flex flex-col items-center justify-center">
           <p className="text-base font-display font-bold text-[#F6DFB0] mb-1.5">
@@ -300,113 +240,102 @@ export const PhotographyGallerySection: React.FC<WorksSectionProps> = ({
           </span>
         </div>
       ) : (
-        <div className="flex flex-col gap-3.5 sm:gap-4 md:gap-5 relative z-10 w-full">
-          {photoRows.map((row, rowIdx) => (
-            <div
-              key={`photo-row-${rowIdx}`}
-              className="flex flex-col sm:flex-row gap-3.5 sm:gap-4 md:gap-5 w-full items-stretch"
-            >
-              {row.map((work) => {
-                const ratio = getAspectRatioNumber(work.aspectClass);
-                const gear = (work.tools || []).filter(Boolean).join(' • ');
+        <div className="columns-1 sm:columns-2 lg:columns-3 gap-5 sm:gap-6 relative z-10 w-full [column-fill:_balance]">
+          {sortedPhotoWorks.map((work) => {
+            const gear = (work.tools || []).filter(Boolean).join(' • ');
 
-                return (
-                  <div
-                    key={work.id}
-                    onClick={() =>
-                      onOpenLightbox({
-                        title: work.title,
-                        subtitle: `${work.committee || 'Fotografi'}${work.year ? ` • ${work.year}` : ''}`,
-                        meta: gear || work.dim,
-                        desc: work.desc,
-                        art: work.art,
-                        imageUrl: work.art,
-                        colors: work.colors,
-                      })
-                    }
-                    style={{
-                      flex: `${ratio} 1 0%`,
-                      aspectRatio: `${ratio}`,
-                    }}
-                    className="group relative w-full sm:w-auto rounded-[18px] sm:rounded-[24px] overflow-hidden border-2 border-[#C6A355]/60 hover:border-[#E2C275] bg-[#020F2B] cursor-pointer transition-all duration-500 hover:-translate-y-1.5 shadow-[0_12px_36px_rgba(0,0,0,0.65)] hover:shadow-[0_20px_50px_rgba(226,194,117,0.3)] flex flex-col justify-between shrink-0 sm:shrink max-h-[520px]"
-                  >
-                    {/* 1. FULL BLEED PHOTO BACKGROUND */}
-                    <div className="absolute inset-0 w-full h-full overflow-hidden">
-                      {work.art &&
-                      (work.art.startsWith('/') ||
-                        work.art.startsWith('http') ||
-                        work.art.match(/\.(png|jpe?g|webp|gif)/i)) ? (
-                        <img
-                          src={work.art}
-                          alt={work.title}
-                          loading="lazy"
-                          decoding="async"
-                          className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-106"
-                        />
-                      ) : (
-                        <div className="w-full h-full transition-transform duration-700 ease-out group-hover:scale-106">
-                          <ArtPreview type={work.art} title={work.title} />
-                        </div>
-                      )}
-                      {/* Subtle top & edge vignette */}
-                      <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-transparent to-transparent pointer-events-none" />
+            return (
+              <div
+                key={work.id}
+                onClick={() =>
+                  onOpenLightbox({
+                    title: work.title,
+                    subtitle: `${work.committee || 'Fotografi'}${work.year ? ` • ${work.year}` : ''}`,
+                    meta: gear || work.dim,
+                    desc: work.desc,
+                    art: work.art,
+                    imageUrl: work.art,
+                    colors: work.colors,
+                  })
+                }
+                className="break-inside-avoid mb-5 sm:mb-6 group relative rounded-[20px] sm:rounded-[26px] overflow-hidden border-2 border-[#C6A355]/60 hover:border-[#E2C275] bg-[#020F2B] cursor-pointer transition-all duration-500 hover:-translate-y-2 shadow-[0_12px_36px_rgba(0,0,0,0.65)] hover:shadow-[0_20px_50px_rgba(226,194,117,0.3)] block w-full"
+              >
+                {/* 1. NATURAL FULL PHOTO - ZERO CROPPING */}
+                <div className="relative w-full overflow-hidden bg-[#010D2E]">
+                  {work.art &&
+                  (work.art.startsWith('/') ||
+                    work.art.startsWith('http') ||
+                    work.art.match(/\.(png|jpe?g|webp|gif)/i)) ? (
+                    <img
+                      src={work.art}
+                      alt={work.title}
+                      loading="lazy"
+                      decoding="async"
+                      className="w-full h-auto block transition-transform duration-700 ease-out group-hover:scale-104"
+                    />
+                  ) : (
+                    <div className="w-full aspect-[4/3] transition-transform duration-700 ease-out group-hover:scale-104">
+                      <ArtPreview type={work.art} title={work.title} />
                     </div>
+                  )}
 
-                    {/* 2. TOP FLOATING BADGES */}
-                    <div className="relative z-10 p-3 sm:p-3.5 flex items-center justify-between pointer-events-none">
-                      {work.committee ? (
-                        <span className="px-2.5 py-1 rounded-full bg-black/65 backdrop-blur-md border border-[#E2C275]/60 text-[9px] sm:text-[10px] font-mono-code text-[#F6DFB0] flex items-center gap-1.5 shadow-md">
-                          <span>📍</span>
-                          <span className="truncate max-w-[140px] sm:max-w-[200px] font-semibold">
-                            {work.committee}
-                          </span>
+                  {/* Subtle top vignette */}
+                  <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-transparent pointer-events-none" />
+
+                  {/* 2. TOP FLOATING BADGES */}
+                  <div className="absolute top-0 left-0 right-0 p-3 sm:p-3.5 flex items-start justify-between gap-2 pointer-events-none z-10">
+                    {work.committee ? (
+                      <span className="px-3 py-1 rounded-full bg-black/75 backdrop-blur-md border border-[#E2C275]/60 text-[9px] sm:text-[10px] font-mono-code text-[#F6DFB0] flex items-center gap-1.5 shadow-md max-w-[80%]">
+                        <span className="shrink-0">📍</span>
+                        <span className="font-semibold leading-tight line-clamp-1">
+                          {work.committee}
                         </span>
-                      ) : work.year ? (
-                        <span className="px-2.5 py-1 rounded-full bg-black/65 backdrop-blur-md border border-[#E2C275]/60 text-[9px] sm:text-[10px] font-mono-code text-[#F6DFB0] shadow-md font-bold">
+                      </span>
+                    ) : work.year ? (
+                      <span className="px-3 py-1 rounded-full bg-black/75 backdrop-blur-md border border-[#E2C275]/60 text-[9px] sm:text-[10px] font-mono-code text-[#F6DFB0] shadow-md font-bold">
+                        ✦ {work.year}
+                      </span>
+                    ) : (
+                      <div />
+                    )}
+
+                    <span className="p-1.5 sm:p-2 rounded-full bg-black/75 backdrop-blur-md border border-[#E2C275]/60 text-[#E2C275] group-hover:bg-[#6B0F1A] group-hover:border-[#E2C275] transition-all duration-300 shadow-lg group-hover:scale-110 flex items-center justify-center shrink-0">
+                      <IconMaximize2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                    </span>
+                  </div>
+
+                  {/* 3. BOTTOM CINEMATIC OVERLAY - NON-INTRUSIVE & CLEAN */}
+                  <div className="absolute bottom-0 left-0 right-0 p-3.5 sm:p-4.5 pt-14 sm:pt-16 bg-gradient-to-t from-black/95 via-black/55 to-transparent z-10">
+                    {/* Micro-badges */}
+                    <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
+                      {work.year && (
+                        <span className="px-1.5 py-0.5 rounded bg-[#6B0F1A]/95 border border-[#E2C275]/70 text-[8px] sm:text-[9px] font-mono-code text-[#F6DFB0] font-bold shadow-sm">
                           ✦ {work.year}
                         </span>
-                      ) : (
-                        <div />
                       )}
-
-                      <span className="p-1.5 rounded-full bg-black/65 backdrop-blur-md border border-[#E2C275]/60 text-[#E2C275] group-hover:bg-[#6B0F1A] group-hover:border-[#E2C275] transition-all duration-300 shadow-lg group-hover:scale-110 flex items-center justify-center">
-                        <IconMaximize2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                      </span>
+                      {gear && (
+                        <span className="text-[8px] sm:text-[9px] font-mono-code text-blue-200/90 flex items-center gap-1 leading-none">
+                          <span>📷</span>
+                          <span className="line-clamp-1">{gear}</span>
+                        </span>
+                      )}
                     </div>
 
-                    {/* 3. BOTTOM CINEMATIC GRADIENT OVERLAY */}
-                    <div className="relative z-10 p-3.5 sm:p-4 pt-12 sm:pt-14 bg-gradient-to-t from-black/95 via-black/55 to-transparent">
-                      {/* Year & Gear Micro-Badges */}
-                      <div className="flex flex-wrap items-center gap-1.5 mb-1">
-                        {work.year && (
-                          <span className="px-1.5 py-0.5 rounded bg-[#6B0F1A]/95 border border-[#E2C275]/70 text-[8px] sm:text-[9px] font-mono-code text-[#F6DFB0] font-bold shadow-sm">
-                            ✦ {work.year}
-                          </span>
-                        )}
-                        {gear && (
-                          <span className="text-[8px] sm:text-[9px] font-mono-code text-blue-200/90 flex items-center gap-1 truncate max-w-[180px] sm:max-w-[240px]">
-                            <span>📷</span>
-                            <span className="truncate">{gear}</span>
-                          </span>
-                        )}
-                      </div>
+                    {/* Title */}
+                    <h3 className="font-display font-bold text-sm sm:text-base text-white group-hover:text-[#E2C275] transition-colors leading-snug drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] line-clamp-2">
+                      {work.title}
+                    </h3>
 
-                      {/* Title */}
-                      <h3 className="font-display font-bold text-xs sm:text-sm md:text-base text-white group-hover:text-[#E2C275] transition-colors leading-snug drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] line-clamp-1">
-                        {work.title}
-                      </h3>
-
-                      {/* Interactive CTA Reveal on Hover */}
-                      <div className="flex items-center gap-1 text-[8px] sm:text-[9px] font-mono-code text-[#E2C275] opacity-80 group-hover:opacity-100 transition-all duration-300 mt-1">
-                        <span className="font-semibold">Lihat Foto Resolusi Penuh</span>
-                        <span className="group-hover:translate-x-1 transition-transform">↗</span>
-                      </div>
+                    {/* Interactive CTA */}
+                    <div className="flex items-center gap-1 text-[8px] sm:text-[9px] font-mono-code text-[#E2C275] opacity-80 group-hover:opacity-100 transition-all duration-300 mt-1.5">
+                      <span className="font-semibold">Lihat Foto Resolusi Penuh</span>
+                      <span className="group-hover:translate-x-1 transition-transform">↗</span>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </section>
