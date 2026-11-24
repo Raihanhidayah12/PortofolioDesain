@@ -175,6 +175,27 @@ export const DesignGallerySection: React.FC<WorksSectionProps> = ({
   );
 };
 
+// Safelist mappings to ensure Tailwind compiles all dynamic aspect ratio and grid span variations
+const ASPECT_CLASSES: Record<string, string> = {
+  'aspect-[3/2]': 'aspect-[3/2]',
+  'aspect-[4/3]': 'aspect-[4/3]',
+  'aspect-[16/9]': 'aspect-[16/9]',
+  'aspect-[16/10]': 'aspect-[16/10]',
+  'aspect-[4/5]': 'aspect-[4/5]',
+  'aspect-[2/3]': 'aspect-[2/3]',
+  'aspect-[3/4]': 'aspect-[3/4]',
+  'aspect-[9/16]': 'aspect-[9/16]',
+  'aspect-square': 'aspect-square',
+};
+
+const SPAN_CLASSES: Record<string, string> = {
+  'md:col-span-6 lg:col-span-4': 'md:col-span-6 lg:col-span-4',
+  'md:col-span-6': 'md:col-span-6',
+  'md:col-span-6 lg:col-span-3': 'md:col-span-6 lg:col-span-3',
+  'md:col-span-8 lg:col-span-8': 'md:col-span-8 lg:col-span-8',
+  'md:col-span-12': 'md:col-span-12',
+};
+
 export const PhotographyGallerySection: React.FC<WorksSectionProps> = ({
   onOpenLightbox,
   onCopyHex,
@@ -183,34 +204,32 @@ export const PhotographyGallerySection: React.FC<WorksSectionProps> = ({
   const photoWorks = works.filter((item) => item.category === 'photography');
   const sortedPhotoWorks = [...photoWorks].sort(sortByYearDesc);
 
-  const isTwoCards = sortedPhotoWorks.length === 2;
-  const isOneCard = sortedPhotoWorks.length === 1;
-
   return (
     <section
       id="photography-gallery"
-      className="relative py-14 sm:py-20 md:py-28 px-3 sm:px-6 md:px-8 max-w-6xl mx-auto"
+      className="relative py-10 sm:py-16 md:py-20 px-3 sm:px-6 md:px-8 max-w-6xl mx-auto"
     >
       {/* Ambient Lighting */}
-      <div className="absolute top-10 left-10 w-96 h-96 rounded-full bg-[#0047CC]/20 blur-[140px] pointer-events-none" />
+      <div className="absolute top-10 left-10 w-80 h-80 rounded-full bg-[#0047CC]/15 blur-[120px] pointer-events-none" />
 
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-5 sm:gap-6 mb-8 sm:mb-12 relative z-10">
+      {/* Refined & Balanced Header */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 sm:gap-6 mb-6 sm:mb-8 relative z-10">
         <div>
-          <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#6B0F1A] border border-[#E2C275] text-[10px] sm:text-[11px] font-mono-code text-[#F6DFB0] mb-2.5 sm:mb-3 shadow-md">
-            <IconCamera className="w-3.5 h-3.5 text-[#E2C275]" />
-            <span>✦ PHOTOGRAPHY VAULT ✦</span>
+          <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-[#6B0F1A]/90 border border-[#E2C275]/70 text-[9px] sm:text-[10px] font-mono-code text-[#F6DFB0] mb-2 shadow-sm">
+            <IconCamera className="w-3 h-3 text-[#E2C275]" />
+            <span>✦ DOKUMENTASI FOTOGRAFI ✦</span>
           </span>
-          <h2 className="font-display font-bold text-3xl sm:text-5xl md:text-6xl text-white leading-[0.95] tracking-tight drop-shadow-[0_6px_16px_rgba(0,0,0,0.5)]">
+          <h2 className="font-display font-bold text-2xl sm:text-3xl md:text-4xl text-white tracking-tight leading-tight">
             Galeri <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E2C275] via-[#F6DFB0] to-[#E2C275]">Fotografi</span>
           </h2>
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-          <p className="text-xs sm:text-sm text-blue-100/85 max-w-md leading-relaxed">
-            Koleksi tangkapan visual dan dokumentasi momen berkesan sepanjang perjalanan karya.
+        <div className="flex items-center gap-3">
+          <p className="text-xs sm:text-[13px] text-blue-200/80 max-w-sm leading-relaxed">
+            Koleksi tangkapan visual &amp; dokumentasi momen berkesan.
           </p>
           {sortedPhotoWorks.length > 0 && (
-            <span className="self-start sm:self-auto px-3 py-1 rounded-full bg-[#03184A] border border-[#C6A355]/60 text-[#E2C275] font-mono-code text-[11px] font-bold shrink-0">
+            <span className="px-2.5 py-0.5 rounded-full bg-[#03184A] border border-[#C6A355]/50 text-[#E2C275] font-mono-code text-[10px] font-bold shrink-0">
               {sortedPhotoWorks.length} Foto
             </span>
           )}
@@ -219,7 +238,7 @@ export const PhotographyGallerySection: React.FC<WorksSectionProps> = ({
 
       {/* Photography Works Showcase */}
       {sortedPhotoWorks.length === 0 ? (
-        <div className="relative z-10 py-14 px-4 text-center rounded-[24px] bg-[#021238]/70 border border-[#C6A355]/40 flex flex-col items-center justify-center">
+        <div className="relative z-10 py-12 px-4 text-center rounded-[24px] bg-[#021238]/70 border border-[#C6A355]/40 flex flex-col items-center justify-center">
           <p className="text-base font-display font-bold text-[#F6DFB0] mb-1.5">
             Belum Ada Foto Ditampilkan
           </p>
@@ -228,17 +247,11 @@ export const PhotographyGallerySection: React.FC<WorksSectionProps> = ({
           </span>
         </div>
       ) : (
-        <div
-          className={
-            isOneCard
-              ? 'max-w-3xl mx-auto relative z-10'
-              : isTwoCards
-              ? 'grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 relative z-10'
-              : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-7 relative z-10'
-          }
-        >
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-6 relative z-10">
           {sortedPhotoWorks.map((work) => {
             const gear = (work.tools || []).filter(Boolean).join(' • ');
+            const spanClass = SPAN_CLASSES[work.spanClass] || work.spanClass || 'md:col-span-6 lg:col-span-4';
+            const aspectClass = ASPECT_CLASSES[work.aspectClass] || work.aspectClass || 'aspect-[3/2]';
 
             return (
               <div
@@ -254,9 +267,9 @@ export const PhotographyGallerySection: React.FC<WorksSectionProps> = ({
                     colors: work.colors,
                   })
                 }
-                className="group relative rounded-[28px] sm:rounded-[36px] overflow-hidden border-2 border-[#C6A355]/70 hover:border-[#E2C275] bg-[#020F2B] cursor-pointer transition-all duration-500 hover:-translate-y-2.5 shadow-[0_18px_50px_rgba(0,0,0,0.7)] hover:shadow-[0_26px_70px_rgba(226,194,117,0.32)] h-[460px] sm:h-[520px] md:h-[560px] flex flex-col justify-between"
+                className={`${spanClass} ${aspectClass} group relative rounded-[22px] sm:rounded-[30px] overflow-hidden border-2 border-[#C6A355]/70 hover:border-[#E2C275] bg-[#020F2B] cursor-pointer transition-all duration-500 hover:-translate-y-2 shadow-[0_12px_40px_rgba(0,0,0,0.65)] hover:shadow-[0_20px_60px_rgba(226,194,117,0.3)] flex flex-col justify-between`}
               >
-                {/* 1. FULL BLEED PHOTO (HERO VISUAL) */}
+                {/* 1. FULL BLEED PHOTO BACKGROUND */}
                 <div className="absolute inset-0 w-full h-full overflow-hidden">
                   {work.art &&
                   (work.art.startsWith('/') ||
@@ -267,50 +280,50 @@ export const PhotographyGallerySection: React.FC<WorksSectionProps> = ({
                       alt={work.title}
                       loading="lazy"
                       decoding="async"
-                      className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-108"
+                      className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-106"
                     />
                   ) : (
-                    <div className="w-full h-full transition-transform duration-700 ease-out group-hover:scale-108">
+                    <div className="w-full h-full transition-transform duration-700 ease-out group-hover:scale-106">
                       <ArtPreview type={work.art} title={work.title} />
                     </div>
                   )}
                   {/* Subtle top & edge vignette */}
-                  <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-transparent pointer-events-none" />
+                  <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-transparent to-transparent pointer-events-none" />
                 </div>
 
                 {/* 2. TOP FLOATING BADGES */}
-                <div className="relative z-10 p-4 sm:p-5 flex items-center justify-between pointer-events-none">
+                <div className="relative z-10 p-3.5 sm:p-4 flex items-center justify-between pointer-events-none">
                   {work.committee ? (
-                    <span className="px-3.5 py-1.5 rounded-full bg-black/65 backdrop-blur-md border border-[#E2C275]/60 text-[10px] sm:text-[11px] font-mono-code text-[#F6DFB0] flex items-center gap-1.5 shadow-lg">
+                    <span className="px-3 py-1 rounded-full bg-black/65 backdrop-blur-md border border-[#E2C275]/60 text-[9px] sm:text-[10px] font-mono-code text-[#F6DFB0] flex items-center gap-1.5 shadow-md">
                       <span>📍</span>
-                      <span className="truncate max-w-[200px] sm:max-w-[260px] font-semibold">
+                      <span className="truncate max-w-[170px] sm:max-w-[220px] font-semibold">
                         {work.committee}
                       </span>
                     </span>
                   ) : work.year ? (
-                    <span className="px-3.5 py-1.5 rounded-full bg-black/65 backdrop-blur-md border border-[#E2C275]/60 text-[10px] sm:text-[11px] font-mono-code text-[#F6DFB0] shadow-lg font-bold">
+                    <span className="px-3 py-1 rounded-full bg-black/65 backdrop-blur-md border border-[#E2C275]/60 text-[9px] sm:text-[10px] font-mono-code text-[#F6DFB0] shadow-md font-bold">
                       ✦ {work.year}
                     </span>
                   ) : (
                     <div />
                   )}
 
-                  <span className="p-2 sm:p-2.5 rounded-full bg-black/65 backdrop-blur-md border border-[#E2C275]/60 text-[#E2C275] group-hover:bg-[#6B0F1A] group-hover:border-[#E2C275] transition-all duration-300 shadow-lg group-hover:scale-110 flex items-center justify-center">
-                    <IconMaximize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <span className="p-1.5 sm:p-2 rounded-full bg-black/65 backdrop-blur-md border border-[#E2C275]/60 text-[#E2C275] group-hover:bg-[#6B0F1A] group-hover:border-[#E2C275] transition-all duration-300 shadow-md group-hover:scale-110 flex items-center justify-center">
+                    <IconMaximize2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                   </span>
                 </div>
 
-                {/* 3. BOTTOM CINEMATIC GRADIENT OVERLAY (Minimalist & Focused) */}
-                <div className="relative z-10 p-5 sm:p-7 pt-24 bg-gradient-to-t from-black/95 via-black/65 to-transparent">
+                {/* 3. BOTTOM CINEMATIC GRADIENT OVERLAY */}
+                <div className="relative z-10 p-4 sm:p-5 pt-16 sm:pt-20 bg-gradient-to-t from-black/95 via-black/60 to-transparent">
                   {/* Year & Gear Micro-Badges */}
-                  <div className="flex flex-wrap items-center gap-2 mb-2">
+                  <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
                     {work.year && (
-                      <span className="px-2.5 py-0.5 rounded-md bg-[#6B0F1A]/95 border border-[#E2C275]/70 text-[9px] sm:text-[10px] font-mono-code text-[#F6DFB0] font-bold shadow-sm">
+                      <span className="px-2 py-0.5 rounded bg-[#6B0F1A]/95 border border-[#E2C275]/70 text-[9px] font-mono-code text-[#F6DFB0] font-bold shadow-sm">
                         ✦ {work.year}
                       </span>
                     )}
                     {gear && (
-                      <span className="text-[10px] sm:text-[11px] font-mono-code text-blue-200/90 flex items-center gap-1 truncate max-w-[280px]">
+                      <span className="text-[9px] sm:text-[10px] font-mono-code text-blue-200/90 flex items-center gap-1 truncate max-w-[240px]">
                         <span>📷</span>
                         <span className="truncate">{gear}</span>
                       </span>
@@ -318,12 +331,12 @@ export const PhotographyGallerySection: React.FC<WorksSectionProps> = ({
                   </div>
 
                   {/* Title */}
-                  <h3 className="font-display font-bold text-xl sm:text-2xl md:text-[26px] text-white group-hover:text-[#E2C275] transition-colors leading-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)] line-clamp-2">
+                  <h3 className="font-display font-bold text-base sm:text-lg md:text-xl text-white group-hover:text-[#E2C275] transition-colors leading-snug drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] line-clamp-2">
                     {work.title}
                   </h3>
 
                   {/* Interactive CTA Reveal on Hover */}
-                  <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-mono-code text-[#E2C275] opacity-80 group-hover:opacity-100 transition-all duration-300 mt-2.5">
+                  <div className="flex items-center gap-1 text-[9px] sm:text-[10px] font-mono-code text-[#E2C275] opacity-80 group-hover:opacity-100 transition-all duration-300 mt-1.5">
                     <span className="font-semibold">Lihat Foto Resolusi Penuh</span>
                     <span className="group-hover:translate-x-1 transition-transform">↗</span>
                   </div>

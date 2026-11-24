@@ -2802,9 +2802,13 @@ export default function AdminPage() {
                           className="w-full px-2.5 py-1.5 rounded-lg bg-[#021238] border border-white/20 text-white text-[11px]"
                         >
                           <option value="aspect-[3/2]">Landscape Kamera 3:2 (Default)</option>
+                          <option value="aspect-[4/3]">Landscape Standar 4:3</option>
                           <option value="aspect-[16/9]">Landscape Lebar 16:9</option>
-                          <option value="aspect-[4/3]">Standar 4:3</option>
-                          <option value="aspect-[4/5]">Portrait / Feed 4:5</option>
+                          <option value="aspect-[16/10]">Landscape 16:10</option>
+                          <option value="aspect-[4/5]">Portrait Vertikal 4:5</option>
+                          <option value="aspect-[2/3]">Portrait Kamera 2:3</option>
+                          <option value="aspect-[3/4]">Portrait Standar 3:4</option>
+                          <option value="aspect-[9/16]">Portrait Story 9:16</option>
                           <option value="aspect-square">Square 1:1</option>
                         </select>
                       </div>
@@ -2817,6 +2821,7 @@ export default function AdminPage() {
                         >
                           <option value="md:col-span-6 lg:col-span-4">Standar (3 per baris)</option>
                           <option value="md:col-span-6">Sedang (2 per baris)</option>
+                          <option value="md:col-span-6 lg:col-span-3">Ramping (4 per baris)</option>
                           <option value="md:col-span-12">Lebar Penuh (1 per baris)</option>
                         </select>
                       </div>
