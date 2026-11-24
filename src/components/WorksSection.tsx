@@ -32,20 +32,6 @@ const sortByYearDesc = (a: GalleryWork, b: GalleryWork) => {
   return 0;
 };
 
-const getDesignSpanClass = (spanClass?: string) => {
-  if (!spanClass) return 'col-span-12 sm:col-span-6 lg:col-span-3';
-  if (spanClass.includes('col-span-12')) return 'col-span-12';
-  if (
-    spanClass.includes('col-span-6') &&
-    !spanClass.includes('lg:col-span-4') &&
-    !spanClass.includes('lg:col-span-3')
-  ) {
-    return 'col-span-12 sm:col-span-6 lg:col-span-6';
-  }
-  // Standard design cards: 4 columns on desktop (lg:col-span-3), 2 on tablet, 1 on mobile
-  return 'col-span-12 sm:col-span-6 lg:col-span-3';
-};
-
 export const DesignGallerySection: React.FC<WorksSectionProps> = ({
   onOpenLightbox,
   onCopyHex,
@@ -123,83 +109,131 @@ export const DesignGallerySection: React.FC<WorksSectionProps> = ({
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5 sm:gap-4 md:gap-5 relative z-10">
-            {displayedDesignWorks.map((work) => (
-              <div
-                key={work.id}
-                onClick={() =>
-                  onOpenLightbox({
-                    title: work.title,
-                    subtitle: `${work.categoryLabel} • ${work.committee}`,
-                    meta: `${work.dim} • ${work.tools.join(', ')}`,
-                    desc: work.desc,
-                    art: work.art,
-                    imageUrl: work.art,
-                    colors: work.colors
-                  })
-                }
-                className={`${getDesignSpanClass(work.spanClass)} group rounded-[20px] sm:rounded-[24px] bg-gradient-to-br from-[#062464]/95 via-[#03184A]/95 to-[#010E2E]/98 border border-[#C6A355]/70 hover:border-[#E2C275] overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 hover:-translate-y-1.5 shadow-[0_12px_35px_rgba(0,0,0,0.5)] hover:shadow-[0_16px_40px_rgba(226,194,117,0.2)]`}
-              >
-                <div>
-                  <div
-                    className={`${work.aspectClass || 'aspect-[16/10]'} max-h-[190px] sm:max-h-[210px] w-full relative overflow-hidden border-b border-[#C6A355]/40 bg-[#020F2B]`}
-                  >
-                    <div className="w-full h-full transition-transform duration-500 group-hover:scale-105">
-                      <ArtPreview
-                        type={work.art}
-                        title={work.title}
-                        meta={work.dim}
-                        position={work.dim?.includes('1817') || work.dim?.includes('1920') ? 'top' : 'center'}
+          {/* Design Works 4-Column Grid (1 baris berisi 4 card di Desktop) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4 md:gap-5 relative z-10 w-full">
+            {displayedDesignWorks.map((work) => {
+              const toolsText = (work.tools || []).filter(Boolean).join(' • ');
+              const subtitle = `${work.categoryLabel || 'Desain Grafis'}${work.committee ? ` • ${work.committee}` : ''}`;
+
+              return (
+                <div
+                  key={work.id}
+                  onClick={() =>
+                    onOpenLightbox({
+                      title: work.title,
+                      subtitle,
+                      meta: toolsText ? `${work.dim} • ${toolsText}` : work.dim,
+                      desc: work.desc,
+                      art: work.art,
+                      imageUrl: work.art,
+                      colors: work.colors,
+                    })
+                  }
+                  className="group relative w-full aspect-[4/3] rounded-[18px] sm:rounded-[24px] overflow-hidden border-2 border-[#C6A355]/60 hover:border-[#E2C275] bg-[#020F2B] cursor-pointer transition-all duration-500 hover:-translate-y-1.5 shadow-[0_12px_36px_rgba(0,0,0,0.65)] hover:shadow-[0_20px_50px_rgba(226,194,117,0.3)] flex flex-col justify-between"
+                >
+                  {/* 1. FULL BLEED ARTWORK BACKGROUND */}
+                  <div className="absolute inset-0 w-full h-full overflow-hidden bg-[#021238]">
+                    {work.art &&
+                    (work.art.startsWith('/') ||
+                      work.art.startsWith('http') ||
+                      work.art.match(/\.(png|jpe?g|webp|gif|avif)/i)) ? (
+                      <Image
+                        src={work.art}
+                        alt={work.title}
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                        quality={80}
+                        className={`transition-transform duration-700 ease-out group-hover:scale-106 ${
+                          work.dim?.includes('1817') || work.dim?.includes('1920')
+                            ? 'object-cover object-top'
+                            : 'object-cover object-center'
+                        }`}
                       />
-                    </div>
-                    {work.committee && (
-                      <span className="absolute top-2.5 left-2.5 sm:top-3 sm:left-3 px-2.5 py-0.5 rounded-full bg-[#021238]/90 backdrop-blur-sm border border-[#C6A355]/80 text-[9px] sm:text-[10px] font-mono-code text-[#F6DFB0] truncate max-w-[calc(100%-48px)]">
-                        {work.committee}
-                      </span>
+                    ) : (
+                      <div className="w-full h-full transition-transform duration-700 ease-out group-hover:scale-106">
+                        <ArtPreview type={work.art} title={work.title} meta={work.dim} position="center" />
+                      </div>
                     )}
-                    <span className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 p-1.5 rounded-full bg-[#021238]/90 border border-[#C6A355]/80 text-[#E2C275] opacity-0 group-hover:opacity-100 transition-opacity">
-                      <IconMaximize2 className="w-3 h-3" />
+                    {/* Subtle top & edge vignette */}
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-transparent to-transparent pointer-events-none" />
+                  </div>
+
+                  {/* 2. TOP FLOATING BADGES */}
+                  <div className="relative z-10 p-2 sm:p-2.5 flex items-center justify-between gap-1.5 pointer-events-none w-full min-w-0">
+                    {work.committee ? (
+                      <span
+                        title={work.committee}
+                        className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-black/75 backdrop-blur-md border border-[#E2C275]/60 text-[8.5px] sm:text-[9.5px] font-mono-code text-[#F6DFB0] flex items-center gap-1 shadow-md min-w-0 max-w-[calc(100%-34px)]"
+                      >
+                        <span className="shrink-0 text-[10px]">📍</span>
+                        <span className="truncate font-semibold block min-w-0">
+                          {work.committee}
+                        </span>
+                      </span>
+                    ) : work.categoryLabel ? (
+                      <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-black/75 backdrop-blur-md border border-[#E2C275]/60 text-[8.5px] sm:text-[9.5px] font-mono-code text-[#F6DFB0] shadow-md font-bold shrink-0">
+                        ✦ {work.categoryLabel}
+                      </span>
+                    ) : (
+                      <div />
+                    )}
+
+                    <span className="p-1 sm:p-1.5 rounded-full bg-black/75 backdrop-blur-md border border-[#E2C275]/60 text-[#E2C275] group-hover:bg-[#6B0F1A] group-hover:border-[#E2C275] transition-all duration-300 shadow-lg group-hover:scale-110 flex items-center justify-center shrink-0">
+                      <IconMaximize2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                     </span>
                   </div>
 
-                  <div className="p-3.5 sm:p-4">
-                    <span className="text-[9px] sm:text-[10px] font-mono-code text-[#E2C275] flex items-center gap-1.5 truncate">
-                      <span>✦ {work.categoryLabel}</span>
-                      <span>&bull;</span>
-                      <span>{work.dim}</span>
-                    </span>
-                    <h3 className="font-display font-bold text-base sm:text-lg text-white group-hover:text-[#E2C275] transition-colors mt-1 line-clamp-1">
+                  {/* 3. BOTTOM CINEMATIC GRADIENT OVERLAY */}
+                  <div className="relative z-10 p-2.5 sm:p-3 pt-8 sm:pt-10 bg-gradient-to-t from-black/95 via-black/55 to-transparent w-full min-w-0">
+                    {/* Year & Category / Tool Micro-Badges */}
+                    <div className="flex flex-wrap items-center gap-1.5 mb-1 min-w-0">
+                      {work.year && (
+                        <span className="px-1.5 py-0.5 rounded bg-[#6B0F1A]/95 border border-[#E2C275]/70 text-[8px] sm:text-[9px] font-mono-code text-[#F6DFB0] font-bold shadow-sm shrink-0">
+                          ✦ {work.year}
+                        </span>
+                      )}
+                      <span className="text-[8px] sm:text-[9px] font-mono-code text-blue-200/90 flex items-center gap-1 truncate max-w-full min-w-0">
+                        <span className="shrink-0">🎨</span>
+                        <span className="truncate">
+                          {work.categoryLabel || toolsText || 'Desain Visual'}
+                        </span>
+                      </span>
+                    </div>
+
+                    {/* Title */}
+                    <h3 className="font-display font-bold text-xs sm:text-sm md:text-base text-white group-hover:text-[#E2C275] transition-colors leading-snug drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] truncate min-w-0">
                       {work.title}
                     </h3>
-                    {work.desc && (
-                      <p className="text-[11px] sm:text-xs text-blue-100/80 mt-1 leading-relaxed line-clamp-2">
-                        {work.desc}
-                      </p>
-                    )}
-                  </div>
-                </div>
 
-                <div className="px-3.5 sm:px-4 py-2.5 bg-[#020F2B]/90 border-t border-[#C6A355]/30 flex flex-wrap items-center justify-between gap-1.5">
-                  <span className="text-[9px] sm:text-[10px] font-mono-code text-blue-200/80 truncate max-w-[140px] sm:max-w-none">
-                    {work.tools.join(' • ')}
-                  </span>
-                  <div
-                    className="flex items-center gap-1 shrink-0"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {work.colors.map((hex) => (
-                      <button
-                        key={hex}
-                        onClick={() => onCopyHex(hex)}
-                        title={`Salin kode warna ${hex}`}
-                        className="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full border border-white/50 cursor-pointer hover:scale-125 transition-transform"
-                        style={{ backgroundColor: hex }}
-                      />
-                    ))}
+                    {/* Interactive CTA & Color Dots */}
+                    <div className="flex items-center justify-between gap-1 text-[8px] sm:text-[9px] font-mono-code text-[#E2C275] mt-1">
+                      <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-all duration-300">
+                        <span className="font-semibold">Lihat Desain Resolusi Penuh</span>
+                        <span className="group-hover:translate-x-1 transition-transform">↗</span>
+                      </div>
+
+                      {/* Color Palette Dots */}
+                      {work.colors && work.colors.length > 0 && (
+                        <div
+                          className="flex items-center gap-1 shrink-0"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {work.colors.slice(0, 3).map((hex) => (
+                            <button
+                              key={hex}
+                              onClick={() => onCopyHex(hex)}
+                              title={`Salin ${hex}`}
+                              className="w-2.5 h-2.5 rounded-full border border-white/40 cursor-pointer hover:scale-125 transition-transform"
+                              style={{ backgroundColor: hex }}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Expand/Collapse Button for Graphic Design Works */}
