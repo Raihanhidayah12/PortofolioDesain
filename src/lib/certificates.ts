@@ -48,7 +48,7 @@ export async function getCertificates(): Promise<CertificateItem[]> {
     const { rows } = await pool.query(
       `SELECT id, title, event, role, issuer, year, category, image_url, credential_url, description, order_num
          FROM certificates
-        ORDER BY order_num ASC, created_at DESC`
+        ORDER BY year DESC, order_num ASC, created_at DESC`
     );
 
     if (!rows) return [];

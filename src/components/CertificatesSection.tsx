@@ -41,7 +41,7 @@ export const CertificatesSection: React.FC<CertificatesSectionProps> = ({
   // Real-time live sync across tabs & devices without page reload
   usePortfolioSync(fetchCertificates);
 
-  // Filter logic
+  // Filter & Year-based sorting (Newest year to oldest)
   const categories = ['all', 'Kepanitiaan', 'Organisasi', 'Volunteer'];
   const filteredCertificates =
     selectedCategory === 'all'
@@ -49,6 +49,23 @@ export const CertificatesSection: React.FC<CertificatesSectionProps> = ({
       : certificates.filter(
           (c) => (c.category || '').toLowerCase() === selectedCategory.toLowerCase()
         );
+
+  const getCertYear = (c: CertificateItem): number => {
+    if (c.year) {
+      const match = c.year.match(/\b(20\d\d)\b/);
+      if (match) return parseInt(match[1]);
+      const parsed = parseInt(c.year);
+      if (!isNaN(parsed) && parsed > 1900) return parsed;
+    }
+    return 0;
+  };
+
+  const sortedCertificates = [...filteredCertificates].sort((a, b) => {
+    const yA = getCertYear(a);
+    const yB = getCertYear(b);
+    if (yB !== yA) return yB - yA;
+    return (a.orderNum || 0) - (b.orderNum || 0);
+  });
 
   return (
     <section
@@ -93,7 +110,7 @@ export const CertificatesSection: React.FC<CertificatesSectionProps> = ({
       </div>
 
       {/* CONTENT GRID */}
-      {filteredCertificates.length === 0 ? (
+      {sortedCertificates.length === 0 ? (
         <div className="relative z-10 py-16 px-6 text-center rounded-[28px] bg-gradient-to-b from-[#052368]/80 via-[#03174C]/90 to-[#020E2F]/95 border-2 border-[#C6A355]/60 shadow-[0_20px_50px_rgba(0,0,0,0.6)] flex flex-col items-center justify-center">
           <div className="w-16 h-16 rounded-full bg-[#6B0F1A]/80 border-2 border-[#E2C275] flex items-center justify-center text-[#E2C275] mb-4 shadow-lg shadow-[#E2C275]/20 animate-pulse">
             <IconAward className="w-8 h-8" />
@@ -110,7 +127,7 @@ export const CertificatesSection: React.FC<CertificatesSectionProps> = ({
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 relative z-10">
-          {filteredCertificates.map((cert) => {
+          {sortedCertificates.map((cert) => {
             const isImage = Boolean(
               cert.imageUrl &&
               cert.imageUrl.trim().length > 0 &&

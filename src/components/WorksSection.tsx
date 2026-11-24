@@ -11,6 +11,26 @@ interface WorksSectionProps {
   works?: GalleryWork[];
 }
 
+const getWorkYear = (w: GalleryWork): number => {
+  if (w.year) {
+    const match = w.year.match(/\b(20\d\d)\b/);
+    if (match) return parseInt(match[1]);
+    const parsed = parseInt(w.year);
+    if (!isNaN(parsed) && parsed > 1900) return parsed;
+  }
+  // Fallback: extract 4-digit year from title, committee, or desc
+  const match = `${w.title || ''} ${w.committee || ''} ${w.desc || ''}`.match(/\b(20\d\d)\b/);
+  if (match) return parseInt(match[1]);
+  return 0;
+};
+
+const sortByYearDesc = (a: GalleryWork, b: GalleryWork) => {
+  const yA = getWorkYear(a);
+  const yB = getWorkYear(b);
+  if (yB !== yA) return yB - yA;
+  return 0;
+};
+
 export const DesignGallerySection: React.FC<WorksSectionProps> = ({
   onOpenLightbox,
   onCopyHex,
@@ -23,6 +43,8 @@ export const DesignGallerySection: React.FC<WorksSectionProps> = ({
     designFilter === 'all'
       ? designWorks
       : designWorks.filter((item) => item.category === designFilter);
+
+  const sortedDesignWorks = [...filteredDesignWorks].sort(sortByYearDesc);
 
   return (
     <section
@@ -67,7 +89,7 @@ export const DesignGallerySection: React.FC<WorksSectionProps> = ({
       </div>
 
       {/* Design Works Bento Grid */}
-      {filteredDesignWorks.length === 0 ? (
+      {sortedDesignWorks.length === 0 ? (
         <div className="relative z-10 py-14 px-4 text-center rounded-[24px] bg-[#021238]/70 border border-[#C6A355]/40 flex flex-col items-center justify-center">
           <p className="text-base font-display font-bold text-[#F6DFB0] mb-1.5">
             Belum Ada Karya Desain Ditampilkan
@@ -78,7 +100,7 @@ export const DesignGallerySection: React.FC<WorksSectionProps> = ({
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6 relative z-10">
-          {filteredDesignWorks.map((work) => (
+          {sortedDesignWorks.map((work) => (
             <div
               key={work.id}
               onClick={() =>
@@ -159,6 +181,7 @@ export const PhotographyGallerySection: React.FC<WorksSectionProps> = ({
   works = [],
 }) => {
   const photoWorks = works.filter((item) => item.category === 'photography');
+  const sortedPhotoWorks = [...photoWorks].sort(sortByYearDesc);
 
   return (
     <section
@@ -185,7 +208,7 @@ export const PhotographyGallerySection: React.FC<WorksSectionProps> = ({
       </div>
 
       {/* Photography Works Grid */}
-      {photoWorks.length === 0 ? (
+      {sortedPhotoWorks.length === 0 ? (
         <div className="relative z-10 py-14 px-4 text-center rounded-[24px] bg-[#021238]/70 border border-[#C6A355]/40 flex flex-col items-center justify-center">
           <p className="text-base font-display font-bold text-[#F6DFB0] mb-1.5">
             Belum Ada Foto Ditampilkan
@@ -196,7 +219,7 @@ export const PhotographyGallerySection: React.FC<WorksSectionProps> = ({
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6 relative z-10">
-          {photoWorks.map((work) => (
+          {sortedPhotoWorks.map((work) => (
             <div
               key={work.id}
               onClick={() =>

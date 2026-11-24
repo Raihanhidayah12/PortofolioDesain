@@ -15,16 +15,48 @@ interface GalleryWorkRow {
   colors: string[];
   description: string;
   art: string;
+  year?: string;
 }
 
-// Reads the gallery works straight from Postgres on every request.
+let galleryTableChecked = false;
+async function ensureGalleryTable() {
+  if (galleryTableChecked) return;
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS gallery_works (
+        id            TEXT PRIMARY KEY,
+        title         TEXT NOT NULL,
+        category      TEXT NOT NULL,
+        category_label TEXT NOT NULL,
+        committee     TEXT NOT NULL,
+        span_class    TEXT NOT NULL,
+        aspect_class  TEXT NOT NULL,
+        dim           TEXT NOT NULL,
+        tools         JSONB NOT NULL DEFAULT '[]',
+        colors        JSONB NOT NULL DEFAULT '[]',
+        description   TEXT NOT NULL,
+        art           TEXT NOT NULL,
+        year          VARCHAR(20) DEFAULT '',
+        created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      ALTER TABLE gallery_works ADD COLUMN IF NOT EXISTS year VARCHAR(20) DEFAULT '';
+    `);
+    galleryTableChecked = true;
+  } catch (err) {
+    console.error('ensureGalleryTable error:', err);
+  }
+}
+
+// Reads the gallery works straight from Postgres on every request, sorted newest year first.
 export async function getGalleryWorks(): Promise<GalleryWork[]> {
   try {
+    await ensureGalleryTable();
     const { rows } = await pool.query(
       `SELECT id, title, category, category_label, committee, span_class,
-              aspect_class, dim, tools, colors, description, art
+              aspect_class, dim, tools, colors, description, art,
+              COALESCE(year, '') AS year
          FROM gallery_works
-        ORDER BY id ASC`
+        ORDER BY COALESCE(NULLIF(year, ''), TO_CHAR(created_at, 'YYYY')) DESC, created_at DESC`
     );
     if (!rows) return [];
     return (rows as GalleryWorkRow[]).map((row) => ({
@@ -40,6 +72,7 @@ export async function getGalleryWorks(): Promise<GalleryWork[]> {
       colors: Array.isArray(row.colors) ? row.colors : [],
       desc: row.description,
       art: row.art,
+      year: row.year || '',
     }));
   } catch (error) {
     console.error('getGalleryWorks failed:', error);
@@ -49,11 +82,12 @@ export async function getGalleryWorks(): Promise<GalleryWork[]> {
 
 export async function saveGalleryWork(work: Partial<GalleryWork> & { id: string }): Promise<GalleryWork | null> {
   try {
+    await ensureGalleryTable();
     const { rows } = await pool.query(
       `INSERT INTO gallery_works (
-         id, title, category, category_label, committee, span_class, aspect_class, dim, tools, colors, description, art
+         id, title, category, category_label, committee, span_class, aspect_class, dim, tools, colors, description, art, year
        )
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
        ON CONFLICT (id) DO UPDATE SET
          title = EXCLUDED.title,
          category = EXCLUDED.category,
@@ -65,7 +99,8 @@ export async function saveGalleryWork(work: Partial<GalleryWork> & { id: string 
          tools = EXCLUDED.tools,
          colors = EXCLUDED.colors,
          description = EXCLUDED.description,
-         art = EXCLUDED.art
+         art = EXCLUDED.art,
+         year = EXCLUDED.year
        RETURNING *;`,
       [
         work.id,
@@ -80,6 +115,7 @@ export async function saveGalleryWork(work: Partial<GalleryWork> & { id: string 
         JSON.stringify(work.colors || []),
         work.desc || '',
         work.art || 'cover-banner',
+        work.year || '',
       ]
     );
 
@@ -98,6 +134,7 @@ export async function saveGalleryWork(work: Partial<GalleryWork> & { id: string 
         colors: Array.isArray(row.colors) ? row.colors : [],
         desc: row.description,
         art: row.art,
+        year: row.year || '',
       };
     }
     return null;

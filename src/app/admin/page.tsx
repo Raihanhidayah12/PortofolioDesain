@@ -356,6 +356,10 @@ export default function AdminPage() {
       categoryLabel: editingWork.category === 'photography' ? 'Fotografi' : (editingWork.categoryLabel || 'Karya Desain'),
       committee: editingWork.committee || (editingWork.category === 'photography' ? 'Fotografi' : ''),
       dim: editingWork.dim || '3:2',
+      year: editingWork.year || (() => {
+        const match = `${editingWork.title || ''} ${editingWork.committee || ''}`.match(/\b(20\d\d)\b/);
+        return match ? match[1] : new Date().getFullYear().toString();
+      })(),
       spanClass: editingWork.spanClass || 'md:col-span-6 lg:col-span-4',
       aspectClass: editingWork.aspectClass || 'aspect-[3/2]',
       tools: Array.isArray(editingWork.tools) ? editingWork.tools : [],
@@ -510,6 +514,41 @@ export default function AdminPage() {
     return works.filter((w) => w.category === 'photography');
   }, [works]);
 
+  const getWorkYearNum = (w: GalleryWork): number => {
+    if (w.year) {
+      const match = w.year.match(/\b(20\d\d)\b/);
+      if (match) return parseInt(match[1]);
+      const p = parseInt(w.year);
+      if (!isNaN(p) && p > 1900) return p;
+    }
+    const match = `${w.title || ''} ${w.committee || ''} ${w.desc || ''}`.match(/\b(20\d\d)\b/);
+    if (match) return parseInt(match[1]);
+    return 0;
+  };
+
+  const sortWorkByYearDesc = (a: GalleryWork, b: GalleryWork) => {
+    const yA = getWorkYearNum(a);
+    const yB = getWorkYearNum(b);
+    return yB - yA;
+  };
+
+  const getCertYearNum = (c: CertificateItem): number => {
+    if (c.year) {
+      const match = c.year.match(/\b(20\d\d)\b/);
+      if (match) return parseInt(match[1]);
+      const p = parseInt(c.year);
+      if (!isNaN(p) && p > 1900) return p;
+    }
+    return 0;
+  };
+
+  const sortCertByYearDesc = (a: CertificateItem, b: CertificateItem) => {
+    const yA = getCertYearNum(a);
+    const yB = getCertYearNum(b);
+    if (yB !== yA) return yB - yA;
+    return (a.orderNum || 0) - (b.orderNum || 0);
+  };
+
   const filteredDesignWorks = useMemo(() => {
     let result = designWorks;
     if (galleryCategoryFilter !== 'all') {
@@ -524,7 +563,7 @@ export default function AdminPage() {
           (w.desc && w.desc.toLowerCase().includes(q))
       );
     }
-    return result;
+    return [...result].sort(sortWorkByYearDesc);
   }, [designWorks, searchQuery, galleryCategoryFilter]);
 
   const filteredPhotographyWorks = useMemo(() => {
@@ -539,7 +578,7 @@ export default function AdminPage() {
           w.tools.some((t) => t.toLowerCase().includes(q))
       );
     }
-    return result;
+    return [...result].sort(sortWorkByYearDesc);
   }, [photographyWorks, searchQuery]);
 
   const filteredWorks = filteredDesignWorks;
@@ -561,7 +600,7 @@ export default function AdminPage() {
           (c.issuer && c.issuer.toLowerCase().includes(q))
       );
     }
-    return result;
+    return [...result].sort(sortCertByYearDesc);
   }, [certificates, searchQuery, certificateCategoryFilter]);
 
   const filteredInquiries = useMemo(() => {
@@ -2634,25 +2673,39 @@ export default function AdminPage() {
                   />
                 </div>
 
-                {/* 3. LOKASI / ACARA / SERI & KAMERA (OPSIONAL) */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* 3. TAHUN, LOKASI & KAMERA (OPSIONAL) */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
                     <label className="block text-[#E2C275] font-mono-code font-bold mb-1">
-                      LOKASI / ACARA / KATEGORI (OPSIONAL)
+                      TAHUN FOTO
+                    </label>
+                    <input
+                      type="text"
+                      value={editingWork.year || ''}
+                      onChange={(e) => setEditingWork({ ...editingWork, year: e.target.value })}
+                      placeholder="2026"
+                      className="w-full px-3 py-2 rounded-xl bg-[#010D2E] border border-white/20 text-white font-mono-code text-xs text-center"
+                    />
+                    <span className="text-[9px] text-blue-200/50 mt-0.5 block">Urutan dari terbaru</span>
+                  </div>
+
+                  <div>
+                    <label className="block text-[#E2C275] font-mono-code font-bold mb-1">
+                      LOKASI / ACARA / KATEGORI
                     </label>
                     <input
                       type="text"
                       value={editingWork.committee || ''}
                       onChange={(e) => setEditingWork({ ...editingWork, committee: e.target.value })}
-                      placeholder="Misal: Malang, Techfair, Portrait, Street..."
+                      placeholder="Misal: Malang, Street..."
                       className="w-full px-3 py-2 rounded-xl bg-[#010D2E] border border-white/20 text-white placeholder-blue-300/30 text-xs"
                     />
-                    <span className="text-[9px] text-blue-200/50 mt-0.5 block">Boleh dikosongkan jika bukan kepanitiaan</span>
+                    <span className="text-[9px] text-blue-200/50 mt-0.5 block">Boleh dikosongkan</span>
                   </div>
 
                   <div>
                     <label className="block text-[#E2C275] font-mono-code font-bold mb-1">
-                      KAMERA / GEAR (OPSIONAL)
+                      KAMERA / GEAR
                     </label>
                     <input
                       type="text"
@@ -2666,10 +2719,10 @@ export default function AdminPage() {
                             .filter(Boolean),
                         })
                       }
-                      placeholder="Misal: Canon EOS, Sony A7, iPhone..."
+                      placeholder="Misal: Canon, Sony, HP..."
                       className="w-full px-3 py-2 rounded-xl bg-[#010D2E] border border-white/20 text-white placeholder-blue-300/30 font-mono-code text-[11px]"
                     />
-                    <span className="text-[9px] text-blue-200/50 mt-0.5 block">Pisahkan dengan koma jika lebih dari satu</span>
+                    <span className="text-[9px] text-blue-200/50 mt-0.5 block">Boleh dikosongkan</span>
                   </div>
                 </div>
 
@@ -2771,7 +2824,18 @@ export default function AdminPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-[#E2C275] font-mono-code font-bold mb-1">TAHUN KARYA</label>
+                    <input
+                      type="text"
+                      value={editingWork.year || ''}
+                      onChange={(e) => setEditingWork({ ...editingWork, year: e.target.value })}
+                      placeholder={new Date().getFullYear().toString()}
+                      className="w-full px-3 py-2 rounded-xl bg-[#010D2E] border border-white/20 text-white font-mono-code text-center"
+                    />
+                    <span className="text-[9px] text-blue-200/50 mt-0.5 block">Urutan dari terbaru</span>
+                  </div>
                   <div>
                     <label className="block text-[#E2C275] font-mono-code font-bold mb-1">KEPANITIAAN / ACARA</label>
                     <input

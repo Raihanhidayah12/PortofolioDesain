@@ -65,6 +65,7 @@ export interface GalleryWork {
   colors: string[];
   desc: string;
   art: string;
+  year?: string;
 }
 
 export interface CertificateItem {
