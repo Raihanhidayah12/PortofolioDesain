@@ -32,6 +32,20 @@ const sortByYearDesc = (a: GalleryWork, b: GalleryWork) => {
   return 0;
 };
 
+const getDesignSpanClass = (spanClass?: string) => {
+  if (!spanClass) return 'col-span-12 sm:col-span-6 lg:col-span-3';
+  if (spanClass.includes('col-span-12')) return 'col-span-12';
+  if (
+    spanClass.includes('col-span-6') &&
+    !spanClass.includes('lg:col-span-4') &&
+    !spanClass.includes('lg:col-span-3')
+  ) {
+    return 'col-span-12 sm:col-span-6 lg:col-span-6';
+  }
+  // Standard design cards: 4 columns on desktop (lg:col-span-3), 2 on tablet, 1 on mobile
+  return 'col-span-12 sm:col-span-6 lg:col-span-3';
+};
+
 export const DesignGallerySection: React.FC<WorksSectionProps> = ({
   onOpenLightbox,
   onCopyHex,
@@ -109,7 +123,7 @@ export const DesignGallerySection: React.FC<WorksSectionProps> = ({
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6 relative z-10">
+          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5 sm:gap-4 md:gap-5 relative z-10">
             {displayedDesignWorks.map((work) => (
               <div
                 key={work.id}
@@ -124,46 +138,53 @@ export const DesignGallerySection: React.FC<WorksSectionProps> = ({
                     colors: work.colors
                   })
                 }
-                className={`${work.spanClass} group rounded-[24px] sm:rounded-[32px] bg-gradient-to-br from-[#062464]/95 via-[#03184A]/95 to-[#010E2E]/98 border-2 border-[#C6A355]/75 hover:border-[#E2C275] overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 hover:-translate-y-2 shadow-[0_16px_45px_rgba(0,0,0,0.6)] hover:shadow-[0_20px_50px_rgba(226,194,117,0.22)]`}
+                className={`${getDesignSpanClass(work.spanClass)} group rounded-[20px] sm:rounded-[24px] bg-gradient-to-br from-[#062464]/95 via-[#03184A]/95 to-[#010E2E]/98 border border-[#C6A355]/70 hover:border-[#E2C275] overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 hover:-translate-y-1.5 shadow-[0_12px_35px_rgba(0,0,0,0.5)] hover:shadow-[0_16px_40px_rgba(226,194,117,0.2)]`}
               >
                 <div>
                   <div
-                    className={`${work.aspectClass} max-h-[340px] sm:max-h-[380px] w-full relative overflow-hidden border-b border-[#C6A355]/40`}
+                    className={`${work.aspectClass || 'aspect-[16/10]'} max-h-[190px] sm:max-h-[210px] w-full relative overflow-hidden border-b border-[#C6A355]/40 bg-[#020F2B]`}
                   >
                     <div className="w-full h-full transition-transform duration-500 group-hover:scale-105">
-                      <ArtPreview type={work.art} title={work.title} meta={work.dim} />
+                      <ArtPreview
+                        type={work.art}
+                        title={work.title}
+                        meta={work.dim}
+                        position={work.dim?.includes('1817') || work.dim?.includes('1920') ? 'top' : 'center'}
+                      />
                     </div>
-                    <span className="absolute top-3 left-3 sm:top-3.5 sm:left-3.5 px-2.5 sm:px-3 py-1 rounded-full bg-[#021238]/90 backdrop-blur-sm border border-[#C6A355] text-[9px] sm:text-[10px] font-mono-code text-[#F6DFB0]">
-                      {work.committee}
-                    </span>
-                    <span className="absolute top-3 right-3 sm:top-3.5 sm:right-3.5 p-1.5 sm:p-2 rounded-full bg-[#021238]/90 border border-[#C6A355] text-[#E2C275] opacity-0 group-hover:opacity-100 transition-opacity">
-                      <IconMaximize2 className="w-3.5 h-3.5" />
+                    {work.committee && (
+                      <span className="absolute top-2.5 left-2.5 sm:top-3 sm:left-3 px-2.5 py-0.5 rounded-full bg-[#021238]/90 backdrop-blur-sm border border-[#C6A355]/80 text-[9px] sm:text-[10px] font-mono-code text-[#F6DFB0] truncate max-w-[calc(100%-48px)]">
+                        {work.committee}
+                      </span>
+                    )}
+                    <span className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 p-1.5 rounded-full bg-[#021238]/90 border border-[#C6A355]/80 text-[#E2C275] opacity-0 group-hover:opacity-100 transition-opacity">
+                      <IconMaximize2 className="w-3 h-3" />
                     </span>
                   </div>
 
-                  <div className="p-4 sm:p-6">
-                    <span className="text-[10px] sm:text-[11px] font-mono-code text-[#E2C275] flex items-center gap-1.5">
+                  <div className="p-3.5 sm:p-4">
+                    <span className="text-[9px] sm:text-[10px] font-mono-code text-[#E2C275] flex items-center gap-1.5 truncate">
                       <span>✦ {work.categoryLabel}</span>
                       <span>&bull;</span>
                       <span>{work.dim}</span>
                     </span>
-                    <h3 className="font-display font-bold text-lg sm:text-xl text-white group-hover:text-[#E2C275] transition-colors mt-1 line-clamp-1">
+                    <h3 className="font-display font-bold text-base sm:text-lg text-white group-hover:text-[#E2C275] transition-colors mt-1 line-clamp-1">
                       {work.title}
                     </h3>
                     {work.desc && (
-                      <p className="text-xs sm:text-sm text-blue-100/85 mt-1.5 sm:mt-2 leading-relaxed line-clamp-2">
+                      <p className="text-[11px] sm:text-xs text-blue-100/80 mt-1 leading-relaxed line-clamp-2">
                         {work.desc}
                       </p>
                     )}
                   </div>
                 </div>
 
-                <div className="px-4 sm:px-6 py-3 bg-[#020F2B]/90 border-t border-[#C6A355]/30 flex flex-wrap items-center justify-between gap-2">
-                  <span className="text-[10px] font-mono-code text-blue-200/80 truncate max-w-[200px] sm:max-w-none">
+                <div className="px-3.5 sm:px-4 py-2.5 bg-[#020F2B]/90 border-t border-[#C6A355]/30 flex flex-wrap items-center justify-between gap-1.5">
+                  <span className="text-[9px] sm:text-[10px] font-mono-code text-blue-200/80 truncate max-w-[140px] sm:max-w-none">
                     {work.tools.join(' • ')}
                   </span>
                   <div
-                    className="flex items-center gap-1.5 shrink-0"
+                    className="flex items-center gap-1 shrink-0"
                     onClick={(e) => e.stopPropagation()}
                   >
                     {work.colors.map((hex) => (
@@ -171,7 +192,7 @@ export const DesignGallerySection: React.FC<WorksSectionProps> = ({
                         key={hex}
                         onClick={() => onCopyHex(hex)}
                         title={`Salin kode warna ${hex}`}
-                        className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full border border-white/50 cursor-pointer hover:scale-125 transition-transform"
+                        className="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full border border-white/50 cursor-pointer hover:scale-125 transition-transform"
                         style={{ backgroundColor: hex }}
                       />
                     ))}

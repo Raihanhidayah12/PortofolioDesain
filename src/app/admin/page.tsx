@@ -394,7 +394,7 @@ export default function AdminPage() {
         const match = `${editingWork.title || ''} ${editingWork.committee || ''}`.match(/\b(20\d\d)\b/);
         return match ? match[1] : new Date().getFullYear().toString();
       })(),
-      spanClass: editingWork.spanClass || 'md:col-span-6 lg:col-span-4',
+      spanClass: editingWork.spanClass || 'col-span-12 sm:col-span-6 lg:col-span-3',
       aspectClass: editingWork.aspectClass || 'aspect-[3/2]',
       tools: Array.isArray(editingWork.tools) ? editingWork.tools : [],
       colors: Array.isArray(editingWork.colors) && editingWork.colors.length > 0
@@ -1546,7 +1546,7 @@ export default function AdminPage() {
                         category: 'poster',
                         categoryLabel: 'Event Poster',
                         committee: '',
-                        spanClass: 'md:col-span-6 lg:col-span-4',
+                        spanClass: 'col-span-12 sm:col-span-6 lg:col-span-3',
                         aspectClass: 'aspect-[4/5]',
                         dim: '1080 × 1350 px',
                         tools: ['Figma'],
@@ -2933,13 +2933,18 @@ export default function AdminPage() {
                   <div>
                     <label className="block text-[#E2C275] font-mono-code font-bold mb-1">LEBAR GRID</label>
                     <select
-                      value={editingWork.spanClass || 'md:col-span-6'}
+                      value={
+                        editingWork.spanClass === 'md:col-span-6 lg:col-span-4' ||
+                        !editingWork.spanClass
+                          ? 'col-span-12 sm:col-span-6 lg:col-span-3'
+                          : editingWork.spanClass
+                      }
                       onChange={(e) => setEditingWork({ ...editingWork, spanClass: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl bg-[#010D2E] border border-white/20 text-white text-xs font-mono-code"
                     >
-                      <option value="md:col-span-6 lg:col-span-4">Standar (4 Kolom / 3 per baris)</option>
-                      <option value="md:col-span-6">Sedang (6 Kolom / 2 per baris)</option>
-                      <option value="md:col-span-12">Lebar Penuh (12 Kolom / 1 per baris)</option>
+                      <option value="col-span-12 sm:col-span-6 lg:col-span-3">Standar (4 per baris di Desktop)</option>
+                      <option value="col-span-12 sm:col-span-6 lg:col-span-6">Sedang (2 per baris di Desktop)</option>
+                      <option value="col-span-12">Lebar Penuh (1 per baris)</option>
                     </select>
                   </div>
                 </div>

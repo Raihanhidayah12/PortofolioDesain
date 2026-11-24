@@ -5,9 +5,19 @@ interface ArtPreviewProps {
   type: string;
   title?: string;
   meta?: string;
+  fit?: 'cover' | 'contain';
+  position?: 'top' | 'center' | 'bottom';
+  className?: string;
 }
 
-export const ArtPreview: React.FC<ArtPreviewProps> = ({ type, title, meta }) => {
+export const ArtPreview: React.FC<ArtPreviewProps> = ({
+  type,
+  title,
+  meta,
+  fit = 'cover',
+  position = 'center',
+  className = ''
+}) => {
   // If type is a direct image path or URL
   if (
     type &&
@@ -17,6 +27,14 @@ export const ArtPreview: React.FC<ArtPreviewProps> = ({ type, title, meta }) => 
       type.match(/\.(png|jpe?g|svg|webp|gif|avif)/i))
   ) {
     const isSvg = type.includes('.svg');
+    const posClass =
+      position === 'top'
+        ? 'object-top'
+        : position === 'bottom'
+        ? 'object-bottom'
+        : 'object-center';
+    const fitClass = fit === 'contain' ? 'object-contain' : 'object-cover';
+
     return (
       <div className="w-full h-full relative overflow-hidden bg-[#021238] flex items-center justify-center">
         {isSvg ? (
@@ -25,19 +43,19 @@ export const ArtPreview: React.FC<ArtPreviewProps> = ({ type, title, meta }) => 
             alt={title || 'Preview'}
             loading="lazy"
             decoding="async"
-            className="w-full h-full object-cover object-top"
+            className={`w-full h-full ${fitClass} ${posClass} ${className}`}
           />
         ) : (
           <Image
             src={type}
             alt={title || 'Preview'}
             fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
             quality={80}
-            className="object-cover object-top"
+            className={`${fitClass} ${posClass} ${className}`}
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
       </div>
     );
   }
