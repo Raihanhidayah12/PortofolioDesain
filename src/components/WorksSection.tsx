@@ -32,6 +32,55 @@ const sortByYearDesc = (a: GalleryWork, b: GalleryWork) => {
   return 0;
 };
 
+// Numeric aspect ratio resolver for true Justified Mosaic Layout
+const getAspectRatioNumber = (aspectClass?: string): number => {
+  if (!aspectClass) return 1.5;
+  if (aspectClass === 'aspect-square' || aspectClass === 'aspect-[1/1]') return 1.0;
+  if (aspectClass === 'aspect-video' || aspectClass === 'aspect-[16/9]') return 16 / 9; // ~1.78
+  if (aspectClass === 'aspect-[16/10]') return 1.6;
+  if (aspectClass === 'aspect-[3/2]') return 1.5;
+  if (aspectClass === 'aspect-[4/3]') return 4 / 3; // ~1.333
+  if (aspectClass === 'aspect-[4/5]') return 0.8;
+  if (aspectClass === 'aspect-[3/4]') return 0.75;
+  if (aspectClass === 'aspect-[2/3]') return 2 / 3; // ~0.667
+  if (aspectClass === 'aspect-[9/16]') return 9 / 16; // ~0.5625
+  const match = aspectClass.match(/aspect-\[(\d+)\/(\d+)\]/);
+  if (match) {
+    const w = parseFloat(match[1]);
+    const h = parseFloat(match[2]);
+    if (h > 0) return w / h;
+  }
+  return 1.5;
+};
+
+// Groups design works into justified horizontal rows, targeting 4 cards per row
+const groupDesignWorksIntoRows = (
+  works: GalleryWork[],
+  targetPerRow = 4
+): GalleryWork[][] => {
+  const n = works.length;
+  if (n <= targetPerRow) return [works];
+
+  const rows: GalleryWork[][] = [];
+  let i = 0;
+  while (i < n) {
+    const remaining = n - i;
+    let chunkSize = targetPerRow;
+    if (remaining === 5) {
+      chunkSize = 3;
+    } else if (remaining === 6) {
+      chunkSize = 3;
+    } else if (remaining === targetPerRow + 1) {
+      chunkSize = Math.ceil((targetPerRow + 1) / 2);
+    } else if (remaining < targetPerRow) {
+      chunkSize = remaining;
+    }
+    rows.push(works.slice(i, i + chunkSize));
+    i += chunkSize;
+  }
+  return rows;
+};
+
 export const DesignGallerySection: React.FC<WorksSectionProps> = ({
   onOpenLightbox,
   onCopyHex,
@@ -48,9 +97,12 @@ export const DesignGallerySection: React.FC<WorksSectionProps> = ({
       : designWorks.filter((item) => item.category === designFilter);
 
   const sortedDesignWorks = [...filteredDesignWorks].sort(sortByYearDesc);
-  const displayedDesignWorks = showAllDesigns
-    ? sortedDesignWorks
-    : sortedDesignWorks.slice(0, INITIAL_DESIGN_LIMIT);
+  const designRows = groupDesignWorksIntoRows(sortedDesignWorks, 4);
+  const INITIAL_ROW_LIMIT = 2;
+  const displayedDesignRows = showAllDesigns
+    ? designRows
+    : designRows.slice(0, INITIAL_ROW_LIMIT);
+  const remainingDesignsCount = sortedDesignWorks.length - displayedDesignRows.flat().length;
 
   return (
     <section
@@ -109,135 +161,147 @@ export const DesignGallerySection: React.FC<WorksSectionProps> = ({
         </div>
       ) : (
         <>
-          {/* Design Works 4-Column Grid (1 baris berisi 4 card di Desktop) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4 md:gap-5 relative z-10 w-full">
-            {displayedDesignWorks.map((work) => {
-              const toolsText = (work.tools || []).filter(Boolean).join(' • ');
-              const subtitle = `${work.categoryLabel || 'Desain Grafis'}${work.committee ? ` • ${work.committee}` : ''}`;
+          {/* Design Works Justified Rows Layout (Layout persis seperti galeri foto, ukuran mengikuti aspek rasio kartu admin, 1 baris berisi 4 card) */}
+          <div className="flex flex-col gap-3.5 sm:gap-4 md:gap-5 relative z-10 w-full">
+            {displayedDesignRows.map((row, rowIdx) => (
+              <div
+                key={`design-row-${rowIdx}`}
+                className="flex flex-col sm:flex-row gap-3.5 sm:gap-4 md:gap-5 w-full items-stretch"
+              >
+                {row.map((work) => {
+                  const ratio = getAspectRatioNumber(work.aspectClass);
+                  const toolsText = (work.tools || []).filter(Boolean).join(' • ');
+                  const subtitle = `${work.categoryLabel || 'Desain Grafis'}${work.committee ? ` • ${work.committee}` : ''}`;
 
-              return (
-                <div
-                  key={work.id}
-                  onClick={() =>
-                    onOpenLightbox({
-                      title: work.title,
-                      subtitle,
-                      meta: toolsText ? `${work.dim} • ${toolsText}` : work.dim,
-                      desc: work.desc,
-                      art: work.art,
-                      imageUrl: work.art,
-                      colors: work.colors,
-                    })
-                  }
-                  className="group relative w-full aspect-[4/3] rounded-[18px] sm:rounded-[24px] overflow-hidden border-2 border-[#C6A355]/60 hover:border-[#E2C275] bg-[#020F2B] cursor-pointer transition-all duration-500 hover:-translate-y-1.5 shadow-[0_12px_36px_rgba(0,0,0,0.65)] hover:shadow-[0_20px_50px_rgba(226,194,117,0.3)] flex flex-col justify-between"
-                >
-                  {/* 1. FULL BLEED ARTWORK BACKGROUND */}
-                  <div className="absolute inset-0 w-full h-full overflow-hidden bg-[#021238]">
-                    {work.art &&
-                    (work.art.startsWith('/') ||
-                      work.art.startsWith('http') ||
-                      work.art.match(/\.(png|jpe?g|webp|gif|avif)/i)) ? (
-                      <Image
-                        src={work.art}
-                        alt={work.title}
-                        fill
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                        quality={80}
-                        className={`transition-transform duration-700 ease-out group-hover:scale-106 ${
-                          work.dim?.includes('1817') || work.dim?.includes('1920')
-                            ? 'object-cover object-top'
-                            : 'object-cover object-center'
-                        }`}
-                      />
-                    ) : (
-                      <div className="w-full h-full transition-transform duration-700 ease-out group-hover:scale-106">
-                        <ArtPreview type={work.art} title={work.title} meta={work.dim} position="center" />
-                      </div>
-                    )}
-                    {/* Subtle top & edge vignette */}
-                    <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-transparent to-transparent pointer-events-none" />
-                  </div>
-
-                  {/* 2. TOP FLOATING BADGES */}
-                  <div className="relative z-10 p-2 sm:p-2.5 flex items-center justify-between gap-1.5 pointer-events-none w-full min-w-0">
-                    {work.committee ? (
-                      <span
-                        title={work.committee}
-                        className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-black/75 backdrop-blur-md border border-[#E2C275]/60 text-[8.5px] sm:text-[9.5px] font-mono-code text-[#F6DFB0] flex items-center gap-1 shadow-md min-w-0 max-w-[calc(100%-34px)]"
-                      >
-                        <span className="shrink-0 text-[10px]">📍</span>
-                        <span className="truncate font-semibold block min-w-0">
-                          {work.committee}
-                        </span>
-                      </span>
-                    ) : work.categoryLabel ? (
-                      <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-black/75 backdrop-blur-md border border-[#E2C275]/60 text-[8.5px] sm:text-[9.5px] font-mono-code text-[#F6DFB0] shadow-md font-bold shrink-0">
-                        ✦ {work.categoryLabel}
-                      </span>
-                    ) : (
-                      <div />
-                    )}
-
-                    <span className="p-1 sm:p-1.5 rounded-full bg-black/75 backdrop-blur-md border border-[#E2C275]/60 text-[#E2C275] group-hover:bg-[#6B0F1A] group-hover:border-[#E2C275] transition-all duration-300 shadow-lg group-hover:scale-110 flex items-center justify-center shrink-0">
-                      <IconMaximize2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                    </span>
-                  </div>
-
-                  {/* 3. BOTTOM CINEMATIC GRADIENT OVERLAY */}
-                  <div className="relative z-10 p-2.5 sm:p-3 pt-8 sm:pt-10 bg-gradient-to-t from-black/95 via-black/55 to-transparent w-full min-w-0">
-                    {/* Year & Category / Tool Micro-Badges */}
-                    <div className="flex flex-wrap items-center gap-1.5 mb-1 min-w-0">
-                      {work.year && (
-                        <span className="px-1.5 py-0.5 rounded bg-[#6B0F1A]/95 border border-[#E2C275]/70 text-[8px] sm:text-[9px] font-mono-code text-[#F6DFB0] font-bold shadow-sm shrink-0">
-                          ✦ {work.year}
-                        </span>
-                      )}
-                      <span className="text-[8px] sm:text-[9px] font-mono-code text-blue-200/90 flex items-center gap-1 truncate max-w-full min-w-0">
-                        <span className="shrink-0">🎨</span>
-                        <span className="truncate">
-                          {work.categoryLabel || toolsText || 'Desain Visual'}
-                        </span>
-                      </span>
-                    </div>
-
-                    {/* Title */}
-                    <h3 className="font-display font-bold text-xs sm:text-sm md:text-base text-white group-hover:text-[#E2C275] transition-colors leading-snug drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] truncate min-w-0">
-                      {work.title}
-                    </h3>
-
-                    {/* Interactive CTA & Color Dots */}
-                    <div className="flex items-center justify-between gap-1 text-[8px] sm:text-[9px] font-mono-code text-[#E2C275] mt-1">
-                      <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-all duration-300">
-                        <span className="font-semibold">Lihat Desain Resolusi Penuh</span>
-                        <span className="group-hover:translate-x-1 transition-transform">↗</span>
+                  return (
+                    <div
+                      key={work.id}
+                      onClick={() =>
+                        onOpenLightbox({
+                          title: work.title,
+                          subtitle,
+                          meta: toolsText ? `${work.dim} • ${toolsText}` : work.dim,
+                          desc: work.desc,
+                          art: work.art,
+                          imageUrl: work.art,
+                          colors: work.colors,
+                        })
+                      }
+                      style={{
+                        flex: `${ratio} 1 0%`,
+                        aspectRatio: `${ratio}`,
+                      }}
+                      className="group relative w-full sm:w-auto rounded-[18px] sm:rounded-[24px] overflow-hidden border-2 border-[#C6A355]/60 hover:border-[#E2C275] bg-[#020F2B] cursor-pointer transition-all duration-500 hover:-translate-y-1.5 shadow-[0_12px_36px_rgba(0,0,0,0.65)] hover:shadow-[0_20px_50px_rgba(226,194,117,0.3)] flex flex-col justify-between shrink-0 sm:shrink max-h-[520px]"
+                    >
+                      {/* 1. FULL BLEED ARTWORK BACKGROUND */}
+                      <div className="absolute inset-0 w-full h-full overflow-hidden bg-[#021238]">
+                        {work.art &&
+                        (work.art.startsWith('/') ||
+                          work.art.startsWith('http') ||
+                          work.art.match(/\.(png|jpe?g|webp|gif|avif)/i)) ? (
+                          <Image
+                            src={work.art}
+                            alt={work.title}
+                            fill
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                            quality={80}
+                            className={`transition-transform duration-700 ease-out group-hover:scale-106 ${
+                              work.dim?.includes('1817') || work.dim?.includes('1920')
+                                ? 'object-cover object-top'
+                                : 'object-cover object-center'
+                            }`}
+                          />
+                        ) : (
+                          <div className="w-full h-full transition-transform duration-700 ease-out group-hover:scale-106">
+                            <ArtPreview type={work.art} title={work.title} meta={work.dim} position="center" />
+                          </div>
+                        )}
+                        {/* Subtle top & edge vignette */}
+                        <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-transparent to-transparent pointer-events-none" />
                       </div>
 
-                      {/* Color Palette Dots */}
-                      {work.colors && work.colors.length > 0 && (
-                        <div
-                          className="flex items-center gap-1 shrink-0"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {work.colors.slice(0, 3).map((hex) => (
-                            <button
-                              key={hex}
-                              onClick={() => onCopyHex(hex)}
-                              title={`Salin ${hex}`}
-                              className="w-2.5 h-2.5 rounded-full border border-white/40 cursor-pointer hover:scale-125 transition-transform"
-                              style={{ backgroundColor: hex }}
-                            />
-                          ))}
+                      {/* 2. TOP FLOATING BADGES */}
+                      <div className="relative z-10 p-2 sm:p-2.5 flex items-center justify-between gap-1.5 pointer-events-none w-full min-w-0">
+                        {work.committee ? (
+                          <span
+                            title={work.committee}
+                            className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-black/75 backdrop-blur-md border border-[#E2C275]/60 text-[8.5px] sm:text-[9.5px] font-mono-code text-[#F6DFB0] flex items-center gap-1 shadow-md min-w-0 max-w-[calc(100%-34px)]"
+                          >
+                            <span className="shrink-0 text-[10px]">📍</span>
+                            <span className="truncate font-semibold block min-w-0">
+                              {work.committee}
+                            </span>
+                          </span>
+                        ) : work.categoryLabel ? (
+                          <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-black/75 backdrop-blur-md border border-[#E2C275]/60 text-[8.5px] sm:text-[9.5px] font-mono-code text-[#F6DFB0] shadow-md font-bold shrink-0">
+                            ✦ {work.categoryLabel}
+                          </span>
+                        ) : (
+                          <div />
+                        )}
+
+                        <span className="p-1 sm:p-1.5 rounded-full bg-black/75 backdrop-blur-md border border-[#E2C275]/60 text-[#E2C275] group-hover:bg-[#6B0F1A] group-hover:border-[#E2C275] transition-all duration-300 shadow-lg group-hover:scale-110 flex items-center justify-center shrink-0">
+                          <IconMaximize2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                        </span>
+                      </div>
+
+                      {/* 3. BOTTOM CINEMATIC GRADIENT OVERLAY */}
+                      <div className="relative z-10 p-2.5 sm:p-3.5 pt-10 sm:pt-12 bg-gradient-to-t from-black/95 via-black/55 to-transparent w-full min-w-0">
+                        {/* Year & Category / Tool Micro-Badges */}
+                        <div className="flex flex-wrap items-center gap-1.5 mb-1 min-w-0">
+                          {work.year && (
+                            <span className="px-1.5 py-0.5 rounded bg-[#6B0F1A]/95 border border-[#E2C275]/70 text-[8px] sm:text-[9px] font-mono-code text-[#F6DFB0] font-bold shadow-sm shrink-0">
+                              ✦ {work.year}
+                            </span>
+                          )}
+                          <span className="text-[8px] sm:text-[9px] font-mono-code text-blue-200/90 flex items-center gap-1 truncate max-w-full min-w-0">
+                            <span className="shrink-0">🎨</span>
+                            <span className="truncate">
+                              {work.categoryLabel || toolsText || 'Desain Visual'}
+                            </span>
+                          </span>
                         </div>
-                      )}
+
+                        {/* Title */}
+                        <h3 className="font-display font-bold text-xs sm:text-sm md:text-base text-white group-hover:text-[#E2C275] transition-colors leading-snug drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] truncate min-w-0">
+                          {work.title}
+                        </h3>
+
+                        {/* Interactive CTA & Color Dots */}
+                        <div className="flex items-center justify-between gap-1 text-[8px] sm:text-[9px] font-mono-code text-[#E2C275] mt-1">
+                          <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-all duration-300">
+                            <span className="font-semibold">Lihat Desain Resolusi Penuh</span>
+                            <span className="group-hover:translate-x-1 transition-transform">↗</span>
+                          </div>
+
+                          {/* Color Palette Dots */}
+                          {work.colors && work.colors.length > 0 && (
+                            <div
+                              className="flex items-center gap-1 shrink-0"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {work.colors.slice(0, 3).map((hex) => (
+                                <button
+                                  key={hex}
+                                  onClick={() => onCopyHex(hex)}
+                                  title={`Salin ${hex}`}
+                                  className="w-2.5 h-2.5 rounded-full border border-white/40 cursor-pointer hover:scale-125 transition-transform"
+                                  style={{ backgroundColor: hex }}
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              );
-            })}
+                  );
+                })}
+              </div>
+            ))}
           </div>
 
           {/* Expand/Collapse Button for Graphic Design Works */}
-          {sortedDesignWorks.length > INITIAL_DESIGN_LIMIT && (
+          {designRows.length > INITIAL_ROW_LIMIT && (
             <div className="mt-8 sm:mt-12 text-center relative z-10">
               <button
                 onClick={() => {
@@ -255,7 +319,7 @@ export const DesignGallerySection: React.FC<WorksSectionProps> = ({
                 <span>
                   {showAllDesigns
                     ? 'Tampilkan Lebih Sedikit'
-                    : `Lihat Desain Lainnya (+${sortedDesignWorks.length - INITIAL_DESIGN_LIMIT} Karya)`}
+                    : `Lihat Desain Lainnya (+${remainingDesignsCount} Karya)`}
                 </span>
                 <span
                   className={`text-[#E2C275] transition-transform duration-300 ${
@@ -292,27 +356,6 @@ const SPAN_CLASSES: Record<string, string> = {
   'md:col-span-6 lg:col-span-3': 'md:col-span-6 lg:col-span-3',
   'md:col-span-8 lg:col-span-8': 'md:col-span-8 lg:col-span-8',
   'md:col-span-12': 'md:col-span-12',
-};
-
-// Numeric aspect ratio resolver for true Justified Mosaic Layout (Matching Gambar Kedua)
-const getAspectRatioNumber = (aspectClass?: string): number => {
-  if (!aspectClass) return 1.5;
-  if (aspectClass === 'aspect-square' || aspectClass === 'aspect-[1/1]') return 1.0;
-  if (aspectClass === 'aspect-video' || aspectClass === 'aspect-[16/9]') return 16 / 9; // ~1.78
-  if (aspectClass === 'aspect-[16/10]') return 1.6;
-  if (aspectClass === 'aspect-[3/2]') return 1.5;
-  if (aspectClass === 'aspect-[4/3]') return 4 / 3; // ~1.333
-  if (aspectClass === 'aspect-[4/5]') return 0.8;
-  if (aspectClass === 'aspect-[3/4]') return 0.75;
-  if (aspectClass === 'aspect-[2/3]') return 2 / 3; // ~0.667
-  if (aspectClass === 'aspect-[9/16]') return 9 / 16; // ~0.5625
-  const match = aspectClass.match(/aspect-\[(\d+)\/(\d+)\]/);
-  if (match) {
-    const w = parseFloat(match[1]);
-    const h = parseFloat(match[2]);
-    if (h > 0) return w / h;
-  }
-  return 1.5;
 };
 
 // Partitions photos into flush, justified horizontal rows (just like Google Photos & Gambar Kedua)
