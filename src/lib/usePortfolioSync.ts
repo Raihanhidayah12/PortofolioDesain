@@ -7,13 +7,13 @@ import { useEffect, useCallback } from 'react';
  * 3. VisibilityChange / Focus event (refreshes whenever user switches tabs)
  * 4. Heartbeat timer poll (periodic refresh every few seconds when tab is active)
  */
-export function usePortfolioSync(onSync: () => void, intervalMs: number = 5000) {
+export function usePortfolioSync(onSync: () => void, intervalMs: number = 60000) {
   const handleSync = useCallback(() => {
     onSync();
   }, [onSync]);
 
   useEffect(() => {
-    // 1. BroadcastChannel (Instant 0ms sync across tabs)
+    // 1. BroadcastChannel (Instant 0ms sync across tabs when admin saves changes)
     let channel: BroadcastChannel | null = null;
     try {
       if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
@@ -23,10 +23,10 @@ export function usePortfolioSync(onSync: () => void, intervalMs: number = 5000) 
         };
       }
     } catch (e) {
-      console.warn('BroadcastChannel notice:', e);
+      // ignore
     }
 
-    // 2. Storage event fallback
+    // 2. Storage event fallback (instant sync across tabs on same browser)
     const handleStorage = (e: StorageEvent) => {
       if (e.key === 'portfolio_sync_trigger') {
         handleSync();
@@ -34,7 +34,7 @@ export function usePortfolioSync(onSync: () => void, intervalMs: number = 5000) 
     };
     window.addEventListener('storage', handleStorage);
 
-    // 3. Tab visibility & focus
+    // 3. Tab visibility & focus (syncs only when user switches back to the tab)
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') {
         handleSync();
@@ -43,7 +43,7 @@ export function usePortfolioSync(onSync: () => void, intervalMs: number = 5000) 
     document.addEventListener('visibilitychange', handleVisibility);
     window.addEventListener('focus', handleSync);
 
-    // 4. Background heartbeat interval while tab is visible
+    // 4. Background heartbeat poll (relaxed to 60s instead of 5s to save CPU & network)
     const timer = setInterval(() => {
       if (document.visibilityState === 'visible') {
         handleSync();

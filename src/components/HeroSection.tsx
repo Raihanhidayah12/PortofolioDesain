@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   IconArrowUpRight,
   IconCompass,
@@ -18,7 +18,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   const [menuVisible, setMenuVisible] = useState(false);
   const [bouncedLetter, setBouncedLetter] = useState<string | null>(null);
   const [bounceKey, setBounceKey] = useState(0); // force animation restart
-  const [pointerOffset, setPointerOffset] = useState({ x: 0, y: 0 });
+  const portoCardRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number | null>(null);
 
   const openMenu = () => {
     setMobileMenuOpen(true);
@@ -36,16 +37,32 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
     setTimeout(() => setBouncedLetter(null), 650);
   };
 
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (rafRef.current) return;
+    const clientX = e.clientX;
+    const clientY = e.clientY;
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = null;
+      if (portoCardRef.current) {
+        const nx = ((clientX / window.innerWidth - 0.5) * 18 * 0.45).toFixed(2);
+        const ny = (-(clientY / window.innerHeight - 0.5) * 14 * 0.45).toFixed(2);
+        portoCardRef.current.style.transform = `perspective(900px) rotateY(${nx}deg) rotateX(${ny}deg)`;
+      }
+    });
+  };
+
+  useEffect(() => {
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, []);
+
   const sunburstRays = Array.from({ length: 32 }, (_, i) => i * (360 / 32));
 
   return (
     <section
       id="top"
-      onMouseMove={(e) => {
-        const nx = (e.clientX / window.innerWidth - 0.5) * 18;
-        const ny = (e.clientY / window.innerHeight - 0.5) * 14;
-        setPointerOffset({ x: nx, y: ny });
-      }}
+      onMouseMove={handleMouseMove}
       className="relative min-h-[100dvh] w-full flex flex-col justify-between overflow-hidden p-2 sm:p-4 md:p-6 lg:p-7"
       style={{
         background:
@@ -306,14 +323,14 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           </div>
 
           <div
+            ref={portoCardRef}
             onMouseEnter={() => triggerBounce('hero')}
             onClick={() => triggerBounce('hero')}
             style={{
-              transform: `perspective(900px) rotateY(${
-                pointerOffset.x * 0.45
-              }deg) rotateX(${-pointerOffset.y * 0.45}deg)`
+              transform: 'perspective(900px) rotateY(0deg) rotateX(0deg)',
+              willChange: 'transform'
             }}
-            className="transition-transform duration-200 ease-out cursor-pointer w-full max-w-full"
+            className="transition-transform duration-150 ease-out cursor-pointer w-full max-w-full"
           >
             {/* ROW 1: P O R T O (Letter-by-Letter Entrance Stagger) */}
             <div className="flex items-center justify-center font-display font-bold text-white leading-[0.82] tracking-[-0.04em] text-[25vw] xs:text-[26vw] sm:text-[155px] md:text-[200px] lg:text-[245px]">

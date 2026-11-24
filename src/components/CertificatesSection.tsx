@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import { IconAward, IconMaximize2, IconSparkles, IconLayers, IconArrowUpRight } from './icons';
 import { CertificateItem, LightboxItem } from '@/types';
 import { usePortfolioSync } from '@/lib/usePortfolioSync';
@@ -167,12 +168,13 @@ export const CertificatesSection: React.FC<CertificatesSectionProps> = ({
                   <div className="aspect-[16/10] w-full relative overflow-hidden bg-[#020F2B] border-b border-[#C6A355]/40 flex items-center justify-center">
                     {isImage ? (
                       <div className="w-full h-full relative overflow-hidden">
-                        <img
+                        <Image
                           src={cert.imageUrl}
                           alt={cert.title}
-                          loading="lazy"
-                          decoding="async"
-                          className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
+                          fill
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                          quality={78}
+                          className="object-cover object-center transition-transform duration-500 group-hover:scale-105"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-[#021238]/90 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
                       </div>

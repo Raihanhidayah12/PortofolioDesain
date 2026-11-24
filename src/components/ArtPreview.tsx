@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 
 interface ArtPreviewProps {
   type: string;
@@ -13,17 +14,29 @@ export const ArtPreview: React.FC<ArtPreviewProps> = ({ type, title, meta }) => 
     (type.startsWith('/') ||
       type.startsWith('http://') ||
       type.startsWith('https://') ||
-      type.match(/\.(png|jpe?g|svg|webp|gif)/i))
+      type.match(/\.(png|jpe?g|svg|webp|gif|avif)/i))
   ) {
+    const isSvg = type.includes('.svg');
     return (
       <div className="w-full h-full relative overflow-hidden bg-[#021238] flex items-center justify-center">
-        <img
-          src={type}
-          alt={title || 'Preview'}
-          loading="lazy"
-          decoding="async"
-          className="w-full h-full object-cover object-top"
-        />
+        {isSvg ? (
+          <img
+            src={type}
+            alt={title || 'Preview'}
+            loading="lazy"
+            decoding="async"
+            className="w-full h-full object-cover object-top"
+          />
+        ) : (
+          <Image
+            src={type}
+            alt={title || 'Preview'}
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            quality={80}
+            className="object-cover object-top"
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
       </div>
     );

@@ -54,7 +54,7 @@ export async function POST(request: Request) {
       try {
         const { createCanvas, loadImage } = await import('@napi-rs/canvas');
         const img = await loadImage(buffer);
-        const maxDim = 2048;
+        const maxDim = 1920;
         let w = img.width;
         let h = img.height;
 
@@ -77,9 +77,11 @@ export async function POST(request: Request) {
           ctx.drawImage(img, 0, 0, w, h);
 
           if (ext === '.jpg' || ext === '.jpeg') {
-            finalBuffer = new Uint8Array(canvas.toBuffer('image/jpeg', 85));
+            finalBuffer = new Uint8Array(canvas.toBuffer('image/jpeg', 80));
           } else if (ext === '.webp') {
-            finalBuffer = new Uint8Array(canvas.toBuffer('image/webp', 85));
+            finalBuffer = new Uint8Array(canvas.toBuffer('image/webp', 80));
+          } else if (folder === 'photos') {
+            finalBuffer = new Uint8Array(canvas.toBuffer('image/jpeg', 80));
           } else {
             finalBuffer = new Uint8Array(canvas.toBuffer('image/png'));
           }

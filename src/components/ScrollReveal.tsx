@@ -52,11 +52,14 @@ export const ScrollReveal: React.FC<ScrollRevealProps> = ({
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        setIsVisible(entry.isIntersecting);
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect(); // Once revealed, stay visible and release GPU/observer resources
+        }
       },
       {
         threshold,
-        rootMargin: '-20px 0px -20px 0px',
+        rootMargin: '40px 0px 40px 0px',
       }
     );
 
@@ -70,23 +73,22 @@ export const ScrollReveal: React.FC<ScrollRevealProps> = ({
 
   const hiddenTransform =
     direction === 'up'
-      ? `translateY(${distance}px) scale(0.97)`
+      ? `translateY(${distance}px)`
       : direction === 'down'
-      ? `translateY(-${distance}px) scale(0.97)`
-      : 'scale(0.96)';
+      ? `translateY(-${distance}px)`
+      : 'scale(0.98)';
 
   return (
     <div
       ref={ref}
       style={{
-        transitionDuration: '700ms',
+        transitionDuration: '600ms',
         transitionDelay: isVisible ? `${delayMs}ms` : '0ms',
         transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
         transform: isVisible ? 'none' : hiddenTransform,
         opacity: isVisible ? 1 : 0,
-        filter: isVisible ? 'blur(0px)' : 'blur(1.5px)',
       }}
-      className={`transition-all will-change-[opacity,transform] ${className}`}
+      className={`transition-[opacity,transform] will-change-[opacity,transform] ${className}`}
     >
       {children}
     </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import { IconMaximize2, IconCamera, IconLayers } from './icons';
 import { ArtPreview } from './ArtPreview';
 import { GalleryWork, LightboxItem } from '@/types';
@@ -391,13 +392,14 @@ export const PhotographyGallerySection: React.FC<WorksSectionProps> = ({
                         {work.art &&
                         (work.art.startsWith('/') ||
                           work.art.startsWith('http') ||
-                          work.art.match(/\.(png|jpe?g|webp|gif)/i)) ? (
-                          <img
+                          work.art.match(/\.(png|jpe?g|webp|gif|avif)/i)) ? (
+                          <Image
                             src={work.art}
                             alt={work.title}
-                            loading="lazy"
-                            decoding="async"
-                            className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-106"
+                            fill
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                            quality={78}
+                            className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-106"
                           />
                         ) : (
                           <div className="w-full h-full transition-transform duration-700 ease-out group-hover:scale-106">

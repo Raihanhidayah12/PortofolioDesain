@@ -47,9 +47,9 @@ export async function compressImageClient(
   file: File,
   options: CompressionOptions = {}
 ): Promise<CompressionResult> {
-  const maxDimension = options.maxDimension ?? 2560;
-  const targetQuality = options.quality ?? 0.85;
-  const maxSizeBytes = options.maxSizeBytes ?? 3.5 * 1024 * 1024;
+  const maxDimension = options.maxDimension ?? 1920;
+  const targetQuality = options.quality ?? 0.80;
+  const maxSizeBytes = options.maxSizeBytes ?? 1.2 * 1024 * 1024;
 
   // Lewati kompresi jika bukan gambar raster (misal PDF atau SVG)
   const isImage = file.type.startsWith('image/');

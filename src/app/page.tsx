@@ -96,21 +96,33 @@ export default function Home() {
         />
       )}
 
-      {/* GLOBAL ATMOSPHERIC LIGHTING & TEXTURE - Eliminates "biru doang" flatness */}
+      {/* GLOBAL ATMOSPHERIC LIGHTING & TEXTURE - Optimized GPU-accelerated radial glows */}
       <div
-        className={`fixed inset-0 pointer-events-none z-0 overflow-hidden transition-all duration-1000 ease-out ${
-          pageEntered ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
+        className={`fixed inset-0 pointer-events-none z-0 overflow-hidden transform-gpu [contain:strict] transition-opacity duration-1000 ease-out ${
+          pageEntered ? 'opacity-100' : 'opacity-0'
         }`}
         aria-hidden="true"
       >
-        {/* Top-Right Burgundy Ambient Bloom behind Tools & Journey */}
-        <div className="absolute top-[12%] -right-[15%] w-[750px] h-[750px] rounded-full bg-[#6B0F1A]/25 blur-[160px] pointer-events-none" />
+        {/* Top-Right Burgundy Ambient Bloom */}
+        <div
+          className="absolute top-[12%] -right-[15%] w-[750px] h-[750px] rounded-full pointer-events-none"
+          style={{ background: 'radial-gradient(circle, rgba(107, 15, 26, 0.24) 0%, transparent 70%)' }}
+        />
         {/* Mid-Left Golden Amber Ambient Bloom */}
-        <div className="absolute top-[36%] -left-[15%] w-[680px] h-[680px] rounded-full bg-[#C6A355]/20 blur-[150px] pointer-events-none" />
+        <div
+          className="absolute top-[36%] -left-[15%] w-[680px] h-[680px] rounded-full pointer-events-none"
+          style={{ background: 'radial-gradient(circle, rgba(198, 163, 85, 0.18) 0%, transparent 70%)' }}
+        />
         {/* Mid-Right Royal Sapphire Light Core */}
-        <div className="absolute top-[58%] -right-[12%] w-[700px] h-[700px] rounded-full bg-[#0047CC]/24 blur-[160px] pointer-events-none" />
+        <div
+          className="absolute top-[58%] -right-[12%] w-[700px] h-[700px] rounded-full pointer-events-none"
+          style={{ background: 'radial-gradient(circle, rgba(0, 71, 204, 0.22) 0%, transparent 70%)' }}
+        />
         {/* Bottom Warm Crimson/Burgundy & Gold Glow */}
-        <div className="absolute bottom-[10%] left-[10%] w-[800px] h-[800px] rounded-full bg-[#6B0F1A]/20 blur-[180px] pointer-events-none" />
+        <div
+          className="absolute bottom-[10%] left-[10%] w-[800px] h-[800px] rounded-full pointer-events-none"
+          style={{ background: 'radial-gradient(circle, rgba(107, 15, 26, 0.20) 0%, transparent 70%)' }}
+        />
         {/* Subtle Luxury Art-Deco Celestial Dot Matrix */}
         <div
           className="absolute inset-0 opacity-[0.045] pointer-events-none"
