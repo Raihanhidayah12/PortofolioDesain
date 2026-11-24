@@ -48,17 +48,18 @@ export async function POST(request: Request) {
     let finalBuffer: Uint8Array = buffer;
     const uniqueFileName = `${Date.now()}-${baseName}${ext}`;
 
-    // Auto-compress and proportionally downscale raster images (> 1600px or > 300KB)
-    if (['.png', '.jpg', '.jpeg', '.webp'].includes(ext)) {
+    // Auto-compress and proportionally downscale raster images (> 2000px or > 500KB) if not already pre-optimized
+    const isPreOptimizedWebp = ext === '.webp' && buffer.length < 2 * 1024 * 1024;
+    if (!isPreOptimizedWebp && ['.png', '.jpg', '.jpeg', '.webp'].includes(ext)) {
       try {
         const { createCanvas, loadImage } = await import('@napi-rs/canvas');
         const img = await loadImage(buffer);
-        const maxDim = 1600;
+        const maxDim = 2048;
         let w = img.width;
         let h = img.height;
 
         const needsResize = w > maxDim || h > maxDim;
-        const needsCompression = buffer.length > 300 * 1024;
+        const needsCompression = buffer.length > 500 * 1024;
 
         if (needsResize || needsCompression) {
           if (needsResize) {

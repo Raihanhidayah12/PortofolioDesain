@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { CreativeTool, TreasureStop, GalleryWork, CertificateItem, PhotoItem, OutputItem } from '@/types';
 import { ArtPreview } from '@/components/ArtPreview';
 import { notifyPortfolioUpdate } from '@/lib/usePortfolioSync';
+import { compressImageClient, formatBytes, CompressionResult } from '@/lib/clientImageCompressor';
 
 interface Inquiry {
   id: number;
@@ -94,6 +95,7 @@ export default function AdminPage() {
 
   // Upload States
   const [uploading, setUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<string>('');
 
   // Modals for Create/Edit
   const [editingTool, setEditingTool] = useState<Partial<CreativeTool> | null>(null);
@@ -210,7 +212,7 @@ export default function AdminPage() {
     setPasswordInput('');
   };
 
-  // Helper File Upload
+  // Helper File Upload with Automatic Client-Side Image Compression
   const handleFileUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
     onSuccess: (url: string, data?: { url?: string; thumbnailUrl?: string }) => void,
@@ -220,9 +222,33 @@ export default function AdminPage() {
     if (!file) return;
 
     setUploading(true);
+    setUploadStatus('Mempersiapkan file...');
     try {
+      let fileToUpload = file;
+      let compResult: CompressionResult | null = null;
+
+      // Automatically compress raster images (JPEG, PNG, WebP)
+      // Even if the photo is >5MB, 10MB, 25MB+, it is safely compressed in the browser!
+      const isRasterImage = file.type.startsWith('image/') && !file.type.includes('svg');
+      if (isRasterImage) {
+        try {
+          compResult = await compressImageClient(file, {
+            onProgress: (statusMsg) => setUploadStatus(statusMsg),
+          });
+          fileToUpload = compResult.file;
+        } catch (compErr) {
+          console.warn('Auto compression fallback:', compErr);
+        }
+      }
+
+      const uploadSizeLabel = compResult?.wasCompressed
+        ? formatBytes(compResult.compressedSize)
+        : formatBytes(fileToUpload.size);
+
+      setUploadStatus(`Mengunggah ke database (${uploadSizeLabel})...`);
+
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', fileToUpload);
       formData.append('folder', folder);
 
       const res = await fetch('/api/upload', {
@@ -233,7 +259,14 @@ export default function AdminPage() {
       const data = await res.json();
       if (data.success && data.url) {
         onSuccess(data.url, data);
-        showNotice('File berhasil diunggah');
+        if (compResult && compResult.wasCompressed) {
+          showNotice(
+            `Foto berhasil dioptimasi & diunggah! (${formatBytes(compResult.originalSize)} → ${formatBytes(compResult.compressedSize)}, hemat ${compResult.reductionPercent}%)`,
+            'success'
+          );
+        } else {
+          showNotice('File berhasil diunggah', 'success');
+        }
       } else {
         showNotice(data.error || 'Gagal mengunggah', 'error');
       }
@@ -241,6 +274,7 @@ export default function AdminPage() {
       showNotice('Error: ' + String(err), 'error');
     } finally {
       setUploading(false);
+      setUploadStatus('');
       if (e.target) e.target.value = '';
     }
   };
@@ -1955,10 +1989,11 @@ export default function AdminPage() {
                     className="flex-1 px-3 py-2 rounded-xl bg-[#021238] border border-white/20 text-white font-mono-code text-xs focus:border-[#E2C275] focus:outline-none"
                   />
                   <label className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-900 to-blue-800 hover:from-blue-800 hover:to-blue-700 border border-blue-400 text-[#F6DFB0] cursor-pointer shrink-0 font-mono-code font-bold shadow">
-                    <span>{uploading ? '...' : 'Upload'}</span>
+                    <span>{uploading ? (uploadStatus || '...') : 'Upload'}</span>
                     <input
                       type="file"
                       accept="image/*"
+                      disabled={uploading}
                       className="hidden"
                       onChange={(e) =>
                         handleFileUpload(
@@ -2408,10 +2443,11 @@ export default function AdminPage() {
                             className="flex-1 px-3 py-1.5 rounded-xl bg-[#021238] border border-white/15 text-white font-mono-code text-xs"
                           />
                           <label className="px-3 py-1.5 rounded-xl bg-blue-900 hover:bg-blue-800 border border-blue-400 text-xs font-mono-code text-[#F6DFB0] cursor-pointer shrink-0 shadow">
-                            <span>Upload</span>
+                            <span>{uploading ? (uploadStatus || '...') : 'Upload'}</span>
                             <input
                               type="file"
                               accept="image/*"
+                              disabled={uploading}
                               className="hidden"
                               onChange={(e) =>
                                 handleFileUpload(e, (url) => {
@@ -2517,10 +2553,11 @@ export default function AdminPage() {
                             className="flex-1 px-3 py-1.5 rounded-xl bg-[#021238] border border-white/15 text-white font-mono-code text-xs"
                           />
                           <label className="px-3 py-1.5 rounded-xl bg-blue-900 hover:bg-blue-800 border border-blue-400 text-xs font-mono-code text-[#F6DFB0] cursor-pointer shrink-0 shadow">
-                            <span>Upload</span>
+                            <span>{uploading ? (uploadStatus || '...') : 'Upload'}</span>
                             <input
                               type="file"
                               accept="image/*"
+                              disabled={uploading}
                               className="hidden"
                               onChange={(e) =>
                                 handleFileUpload(e, (url) => {
@@ -2598,7 +2635,9 @@ export default function AdminPage() {
                     <label className="block text-[#E2C275] font-mono-code font-bold text-xs">
                       ✦ FILE FOTO <span className="text-red-400">*</span>
                     </label>
-                    <span className="text-[10px] font-mono-code text-blue-200/60">JPG, PNG, atau WebP</span>
+                    <span className="text-[10px] font-mono-code text-emerald-400 font-semibold flex items-center gap-1">
+                      <span>⚡</span> Auto-Compress Aktif (Ukuran Bebas)
+                    </span>
                   </div>
 
                   {editingWork.art ? (
@@ -2607,11 +2646,12 @@ export default function AdminPage() {
                         <ArtPreview type={editingWork.art} title={editingWork.title || 'Preview Foto'} />
                       </div>
                       <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                        <label className="px-3.5 py-1.5 rounded-xl bg-blue-700 hover:bg-blue-600 text-white font-mono-code font-bold cursor-pointer text-xs shadow-md">
-                          Ganti Foto
+                        <label className={`px-3.5 py-1.5 rounded-xl ${uploading ? 'bg-blue-900/60 text-blue-200 cursor-not-allowed' : 'bg-blue-700 hover:bg-blue-600 text-white cursor-pointer'} font-mono-code font-bold text-xs shadow-md transition-all`}>
+                          {uploading ? (uploadStatus || 'Memproses...') : 'Ganti Foto'}
                           <input
                             type="file"
                             accept="image/*"
+                            disabled={uploading}
                             className="hidden"
                             onChange={(e) =>
                               handleFileUpload(e, (url) => setEditingWork((prev) => (prev ? { ...prev, art: url } : null)))
@@ -2628,19 +2668,26 @@ export default function AdminPage() {
                       </div>
                     </div>
                   ) : (
-                    <label className="flex flex-col items-center justify-center py-7 px-4 rounded-xl border border-white/10 bg-[#021238]/60 hover:bg-[#021238] cursor-pointer transition-all">
+                    <label className={`flex flex-col items-center justify-center py-7 px-4 rounded-xl border border-white/10 bg-[#021238]/60 ${uploading ? 'cursor-wait' : 'hover:bg-[#021238] cursor-pointer'} transition-all`}>
                       <div className="w-12 h-12 rounded-2xl bg-[#6B0F1A] border border-[#E2C275] flex items-center justify-center text-xl text-[#E2C275] mb-2 shadow-md">
-                        📸
+                        {uploading ? '⚡' : '📸'}
                       </div>
-                      <span className="text-white font-bold text-xs">
-                        {uploading ? 'Sedang mengunggah foto...' : 'Klik di sini untuk upload foto'}
+                      <span className="text-white font-bold text-xs text-center">
+                        {uploading ? (uploadStatus || 'Sedang mengompres & mengunggah...') : 'Klik di sini untuk upload foto'}
                       </span>
-                      <span className="text-[10px] text-blue-200/60 mt-0.5">
-                        Foto otomatis tersimpan aman di database
-                      </span>
+                      {uploading ? (
+                        <div className="w-full max-w-xs mt-2 bg-blue-950/80 rounded-full h-1.5 overflow-hidden border border-blue-400/30">
+                          <div className="bg-gradient-to-r from-[#C6A355] to-emerald-400 h-full animate-pulse w-full"></div>
+                        </div>
+                      ) : (
+                        <span className="text-[10px] text-blue-200/60 mt-0.5 text-center">
+                          Ukuran berapapun (&gt;5MB / 10MB+) otomatis dikompres hemat &amp; tajam
+                        </span>
+                      )}
                       <input
                         type="file"
                         accept="image/*"
+                        disabled={uploading}
                         className="hidden"
                         onChange={(e) =>
                           handleFileUpload(e, (url) => setEditingWork((prev) => (prev ? { ...prev, art: url } : null)))
@@ -2955,11 +3002,12 @@ export default function AdminPage() {
                       placeholder="URL gambar (/uploads/...)"
                       className="flex-1 px-3 py-2 rounded-xl bg-[#021238] border border-white/20 text-white font-mono-code text-xs"
                     />
-                    <label className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-900 to-blue-800 hover:from-blue-800 hover:to-blue-700 border border-blue-400 text-[#F6DFB0] cursor-pointer shrink-0 font-mono-code font-bold shadow">
-                      <span>{uploading ? '...' : 'Upload'}</span>
+                    <label className={`px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-900 to-blue-800 hover:from-blue-800 hover:to-blue-700 border border-blue-400 text-[#F6DFB0] font-mono-code font-bold shadow ${uploading ? 'cursor-wait opacity-80' : 'cursor-pointer'}`}>
+                      <span>{uploading ? (uploadStatus || 'Mengunggah...') : 'Upload'}</span>
                       <input
                         type="file"
                         accept="image/*"
+                        disabled={uploading}
                         className="hidden"
                         onChange={(e) =>
                           handleFileUpload(e, (url) => setEditingWork((prev) => (prev ? { ...prev, art: url } : null)))
@@ -3163,7 +3211,7 @@ export default function AdminPage() {
                     className="flex-1 px-3 py-2 rounded-xl bg-[#020F30] border border-white/20 text-white font-mono-code focus:border-[#E2C275] focus:outline-none text-[11px]"
                   />
                   <label className="px-3 py-2 rounded-xl bg-[#6B0F1A] hover:bg-[#8A1422] border border-[#E2C275] text-[#F6DFB0] font-mono-code text-[11px] font-bold cursor-pointer transition-colors shrink-0">
-                    {uploading ? 'Mengunggah...' : 'Unggah Foto'}
+                    {uploading ? (uploadStatus || 'Mengunggah...') : 'Unggah Foto'}
                     <input
                       type="file"
                       accept="image/*,.pdf,application/pdf"
@@ -3225,7 +3273,7 @@ export default function AdminPage() {
                     className="flex-1 px-3 py-2 rounded-xl bg-[#020F30] border border-white/20 text-white font-mono-code focus:border-[#E2C275] focus:outline-none text-[11px]"
                   />
                   <label className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/30 text-blue-200 font-mono-code text-[11px] cursor-pointer transition-colors shrink-0">
-                    {uploading ? 'Mengunggah...' : 'Unggah PDF'}
+                    {uploading ? (uploadStatus || 'Mengunggah...') : 'Unggah PDF'}
                     <input
                       type="file"
                       accept=".pdf,application/pdf"
